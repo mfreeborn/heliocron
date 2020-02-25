@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, Local, TimeZone};
+use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, TimeZone};
 
 pub fn parse_date(
     date: Option<&str>,
@@ -15,7 +15,6 @@ pub fn parse_date(
         Some(d) => d.to_string(),
         None => Local::today().format(date_fmt).to_string(),
     };
-    println!("{:?}", date);
     let time = "12:00:00";
     let datetime = format!("{}T{}", date, time);
 
@@ -57,4 +56,18 @@ pub fn parse_event(event: &str) -> String {
         _ => panic!("--event argument must be one of: 'sunrise' | 'sunset'"),
     };
     event.to_string()
+}
+
+pub fn parse_offset(offset: &str) -> Duration {
+    // offset should either be %H:%M:%S or %H:%M
+    let offset = match offset {
+        offset if NaiveTime::parse_from_str(offset, "%H:%M:%S").is_ok() => {
+            NaiveTime::parse_from_str(offset, "%H:%M:%S").unwrap()
+        }
+        offset if NaiveTime::parse_from_str(offset, "%H:%M").is_ok() => {
+            NaiveTime::parse_from_str(offset, "%H:%M").unwrap()
+        }
+        _ => panic!("Error parsing offset! Expected the format to be one of: %H:%M:%S | %H:%M"),
+    };
+    offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0))
 }

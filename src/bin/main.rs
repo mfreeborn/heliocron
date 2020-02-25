@@ -1,7 +1,10 @@
+use std::thread;
+
+use chrono::Duration;
+use structopt::StructOpt;
+
 use sunwait::parsers;
 use sunwait::report;
-
-use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
 struct Cli {
@@ -23,8 +26,13 @@ enum SubCommand {
     Report {},
 
     Wait {
-        #[structopt(short = "o", long = "offset", default_value = "00:00:00")]
-        offset: String,
+        #[structopt(
+            short = "o",
+            long = "offset",
+            default_value = "00:00:00",
+            parse(from_str=parsers::parse_offset)
+        )]
+        offset: Duration,
 
         // should be one of [sunrise | sunset]
         #[structopt(short = "e", long = "event", parse(from_str=parsers::parse_event))]
@@ -44,9 +52,14 @@ struct DateArgs {
     time_zone: Option<String>,
 }
 
-fn wait(offset: String, report: report::SolarReport, event: String) {
+fn wait(offset: Duration, report: report::SolarReport, event: String) {
     println!("{}", report);
-    println!("We need to wait for this long: {} from {}", offset, event)
+    println!(
+        "We need to wait for this long: {}s from {}",
+        offset.num_seconds(),
+        event
+    );
+    thread::sleep(offset.to_std().unwrap());
 }
 
 fn main() {
