@@ -40,10 +40,20 @@ impl fmt::Display for SolarReport {
         DATE\n\
         ----\n\
         {}\n\n\
-        Sunrise on this day is at {}\n\
-        Sunset on this day is at  {}\n\
-        Solar noon is at          {}",
-            self.latitude, self.longitude, self.date, self.sunrise, self.sunset, self.solar_noon
+        Sunrise is at:       {}\n\
+        Solar noon is at:    {}\n\
+        Sunset is at:        {}\n\n\
+        The day length is:   {}",
+            self.latitude,
+            self.longitude,
+            self.date,
+            self.sunrise,
+            self.solar_noon,
+            self.sunset,
+            NaiveTime::from_num_seconds_from_midnight(
+                (self.sunset - self.sunrise).num_seconds() as u32,
+                0
+            )
         );
 
         write!(f, "{}", fmt_str)
