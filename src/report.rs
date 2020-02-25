@@ -68,7 +68,6 @@ impl SolarReport {
 
     fn day_fraction_to_time(day_fraction: f64) -> NaiveTime {
         // day_fraction should be 0 <= day_fraction < 1
-        // let day_fraction = day.fract();
         let hour_fraction = day_fraction * 24.0;
         let minute_fraction = hour_fraction.fract() * 60.0;
         let second_fraction = minute_fraction.fract() * 60.0;
@@ -80,7 +79,7 @@ impl SolarReport {
         )
     }
 
-    fn run(&mut self) {
+    pub fn run(&mut self) {
         let time_zone = self.date.offset().fix().local_minus_utc() as f64 / 3600.0;
 
         let julian_date: f64 = self.date.to_julian_date();

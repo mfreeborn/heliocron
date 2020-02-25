@@ -1,5 +1,5 @@
-mod parsers;
-mod report;
+use sunwait::parsers;
+use sunwait::report;
 
 use structopt::StructOpt;
 
