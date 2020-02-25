@@ -1,13 +1,21 @@
 use chrono::{DateTime, FixedOffset, Local, TimeZone};
 
-pub fn parse_date(date: &str, date_fmt: &str, time_zone: Option<&str>) -> DateTime<FixedOffset> {
+pub fn parse_date(
+    date: Option<&str>,
+    date_fmt: &str,
+    time_zone: Option<&str>,
+) -> DateTime<FixedOffset> {
     // default date format
     let time_fmt = "%H:%M:%S";
     let datetime_fmt = format!("{}T{}", date_fmt, time_fmt);
 
     // customisable date
     // e.g. 2020-02-24
-    let date = date;
+    let date = match date {
+        Some(d) => d.to_string(),
+        None => Local::today().format(date_fmt).to_string(),
+    };
+    println!("{:?}", date);
     let time = "12:00:00";
     let datetime = format!("{}T{}", date, time);
 
@@ -36,9 +44,17 @@ pub fn parse_latlon(latlon: &str) -> f64 {
         _ => panic!("Expected latitude/longitude to end with one of: N, S, E, W"),
     };
 
-    let latlon: &f64 = &latlon[..latlon.len() - 1]
+    let latlon: f64 = latlon[..latlon.len() - 1]
         .parse()
         .expect("Error, float expected!");
 
     latlon * compass_correction
+}
+
+pub fn parse_event(event: &str) -> String {
+    let event = match event {
+        "sunrise" | "sunset" => event,
+        _ => panic!("--event argument must be one of: 'sunrise' | 'sunset'"),
+    };
+    event.to_string()
 }

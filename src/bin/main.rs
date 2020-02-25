@@ -23,15 +23,19 @@ enum SubCommand {
     Report {},
 
     Wait {
-        #[structopt(short = "t", long = "offset", default_value = "00:00:00")]
+        #[structopt(short = "o", long = "offset", default_value = "00:00:00")]
         offset: String,
+
+        // should be one of [sunrise | sunset]
+        #[structopt(short = "e", long = "event", parse(from_str=parsers::parse_event))]
+        event: String,
     },
 }
 
 #[derive(Debug, StructOpt)]
 struct DateArgs {
-    #[structopt(short = "d", long = "date", default_value = "2020-03-22")]
-    date: String,
+    #[structopt(short = "d", long = "date")]
+    date: Option<String>,
 
     #[structopt(short = "f", long = "date-format", default_value = "%Y-%m-%d")]
     date_fmt: String,
@@ -40,11 +44,16 @@ struct DateArgs {
     time_zone: Option<String>,
 }
 
+fn wait(offset: String, report: report::SolarReport, event: String) {
+    println!("{}", report);
+    println!("We need to wait for this long: {} from {}", offset, event)
+}
+
 fn main() {
     let args = Cli::from_args();
 
     let date = parsers::parse_date(
-        &args.date_args.date,
+        args.date_args.date.as_deref(),
         &args.date_args.date_fmt,
         args.date_args.time_zone.as_deref(),
     );
@@ -56,6 +65,6 @@ fn main() {
 
     match Cli::from_args().sub_cmd {
         SubCommand::Report {} => println!("{}", report),
-        SubCommand::Wait { offset } => println!("We need to wait for this long: {}", offset),
+        SubCommand::Wait { offset, event } => wait(offset, report, event),
     }
 }
