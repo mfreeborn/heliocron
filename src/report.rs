@@ -89,6 +89,14 @@ impl SolarReport {
         )
     }
 
+    pub fn get_sunrise(&self) -> DateTime<FixedOffset> {
+        self.date.date().and_time(self.sunrise).unwrap()
+    }
+
+    pub fn get_sunset(&self) -> DateTime<FixedOffset> {
+        self.date.date().and_time(self.sunset).unwrap()
+    }
+
     pub fn run(&mut self) {
         let time_zone = self.date.offset().fix().local_minus_utc() as f64 / 3600.0;
 

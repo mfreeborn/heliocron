@@ -1,12 +1,16 @@
 use std::thread;
 
-use chrono::Duration;
+use chrono::{Duration, FixedOffset, Local, TimeZone};
+use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
 use heliocron::parsers;
 use heliocron::report;
 
 #[derive(Debug, StructOpt)]
+#[structopt(
+    about = "A simple utility for finding out what time sunrise/sunset is, and executing programs relative to these events."
+)]
 struct Cli {
     #[structopt(subcommand)]
     sub_cmd: SubCommand,
@@ -25,17 +29,24 @@ struct Cli {
 enum SubCommand {
     Report {},
 
+    #[structopt(settings = &[AppSettings::AllowLeadingHyphen])]
     Wait {
         #[structopt(
+            help = "Choose a delay from your chosen event (see --event) in one of the following formats: {HH:MM:SS | HH:MM}. You may prepend the delay with '-' to make it negative. A negative offset will set the delay to be before the event, whilst a positive offset will set the delay to be after the event.",
             short = "o",
             long = "offset",
             default_value = "00:00:00",
-            parse(from_str=parsers::parse_offset)
+            parse(from_str=parsers::parse_offset),
         )]
         offset: Duration,
 
         // should be one of [sunrise | sunset]
-        #[structopt(short = "e", long = "event", parse(from_str=parsers::parse_event))]
+        #[structopt(
+            help = "Choose one of {sunrise | sunset} from which to base your delay.", 
+            short = "e", 
+            long = "event", 
+            parse(from_str=parsers::parse_event)
+        )]
         event: String,
     },
 }
@@ -53,13 +64,31 @@ struct DateArgs {
 }
 
 fn wait(offset: Duration, report: report::SolarReport, event: String) {
-    println!("{}", report);
+    let event_time = match event.as_str() {
+        "sunrise" => report.get_sunrise(),
+        "sunset" => report.get_sunset(),
+        _ => panic!("Expected an event to be one of {sunrise | sunset}"),
+    };
+
+    let sleep_until = event_time + offset;
+
+    let local_time = Local::now();
+    let local_time = local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
+
+    let duration_to_sleep = sleep_until - local_time;
+
+    let duration_to_sleep = match duration_to_sleep.to_std() {
+        Ok(dur) => dur,
+        Err(_) => panic!("This event has already passed! Must pick a time in the future."),
+    };
+
     println!(
-        "We need to wait for this long: {}s from {}",
-        offset.num_seconds(),
-        event
+        "Thread going to sleep for {} seconds until {}. Press ctrl+C to cancel.",
+        duration_to_sleep.as_secs(),
+        sleep_until
     );
-    thread::sleep(offset.to_std().unwrap());
+
+    thread::sleep(duration_to_sleep);
 }
 
 fn main() {

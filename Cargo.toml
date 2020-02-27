@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 chrono = "0.4"
 structopt = "0.3"
+time = "0.2"
 
 [dev-dependencies]
 criterion = "0.3"

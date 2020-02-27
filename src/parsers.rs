@@ -59,7 +59,12 @@ pub fn parse_event(event: &str) -> String {
 }
 
 pub fn parse_offset(offset: &str) -> Duration {
-    // offset should either be %H:%M:%S or %H:%M
+    // offset should either be %H:%M:%S or %H:%M +/- a "-" if negative
+    let (positive, offset): (bool, &str) = match offset.chars().next() {
+        Some('-') => (false, &offset[1..]),
+        _ => (true, offset),
+    };
+
     let offset = match offset {
         offset if NaiveTime::parse_from_str(offset, "%H:%M:%S").is_ok() => {
             NaiveTime::parse_from_str(offset, "%H:%M:%S").unwrap()
@@ -69,5 +74,12 @@ pub fn parse_offset(offset: &str) -> Duration {
         }
         _ => panic!("Error parsing offset! Expected the format to be one of: %H:%M:%S | %H:%M"),
     };
-    offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0))
+
+    let offset = offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0));
+
+    if positive {
+        offset
+    } else {
+        -offset
+    }
 }
