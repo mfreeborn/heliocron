@@ -13,6 +13,9 @@ structopt = "0.3"
 [dev-dependencies]
 criterion = "0.3"
 
+[profile.release]
+lto = true
+
 [[bench]]
 name = "benches"
 harness = false
