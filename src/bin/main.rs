@@ -3,8 +3,8 @@ use std::thread;
 use chrono::Duration;
 use structopt::StructOpt;
 
-use sunwait::parsers;
-use sunwait::report;
+use heliocron::parsers;
+use heliocron::report;
 
 #[derive(Debug, StructOpt)]
 struct Cli {

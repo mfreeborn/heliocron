@@ -1,6 +1,6 @@
 [package]
-name = "sunwait"
-version = "0.1.0"
+name = "heliocron"
+version = "0.1.1"
 authors = ["Michael Freeborn <michaelfreeborn1@gmail.com>"]
 edition = "2018"
 

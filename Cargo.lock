@@ -223,6 +223,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "heliocron"
+version = "0.1.1"
+dependencies = [
+ "chrono",
+ "criterion",
+ "structopt",
+]
+
+[[package]]
 name = "hermit-abi"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -570,15 +579,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "sunwait"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "criterion",
- "structopt",
 ]
 
 [[package]]

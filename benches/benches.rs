@@ -1,6 +1,6 @@
 use chrono::{FixedOffset, TimeZone};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use sunwait::report;
+use heliocron::report;
 
 fn run_report(report: &mut report::SolarReport) -> () {
     report.run()
