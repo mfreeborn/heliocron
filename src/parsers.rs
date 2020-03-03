@@ -83,3 +83,47 @@ pub fn parse_offset(offset: &str) -> Duration {
         -offset
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Timelike;
+    #[test]
+    fn test_parse_date() {
+        let expected = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        // standard usage, just passing in a date
+        let result = parse_date(Some("2020-03-25"), "%Y-%m-%d", None);
+        assert_eq!(expected, result);
+
+        // but if you want to use a snazzy format, that is ok, too
+        let result = parse_date(Some("25 March 2020"), "%d %B %Y", None);
+        assert_eq!(expected, result);
+
+        // and so is providing a custom timezone
+        let expected = expected
+            .with_timezone(&FixedOffset::east(3600))
+            .with_hour(12)
+            .unwrap();
+        let result = parse_date(Some("25 Mar 2020"), "%d %b %Y", Some("+01:00"));
+        assert_eq!(expected, result);
+
+        // if no user arguments are passed in, then return the Local date
+        let expected = Local::today()
+            .and_hms(12, 0, 0)
+            .with_timezone(&FixedOffset::from_offset(Local::now().offset()));
+        let result = parse_date(None, "%Y-%m%-d", None);
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_parse_date_wrong_format_fails() {
+        let _result = parse_date(Some("2020-03-25"), "%Y-%m-%Y", None);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_parse_date_wrong_tz_fails() {
+        let _result = parse_date(Some("2020-03-25"), "%Y-%m-%d", Some("00:00"));
+    }
+}
