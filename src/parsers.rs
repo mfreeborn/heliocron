@@ -36,24 +36,6 @@ pub fn parse_date(
 
     DateTime::parse_from_str(&datetimetz, &datetimetz_fmt).expect("Error parsing date!")
 }
-
-pub fn parse_latlon(latlon: &str) -> f64 {
-    // W and S should be negative
-    let compass_direction: &str = &latlon[latlon.len() - 1..].to_lowercase();
-
-    let compass_correction = match compass_direction {
-        "n" | "e" => 1.0,
-        "w" | "s" => -1.0,
-        _ => panic!("Expected latitude/longitude to end with one of: N, S, E, W"),
-    };
-
-    let latlon: f64 = latlon[..latlon.len() - 1]
-        .parse()
-        .expect("Error, float expected!");
-
-    latlon * compass_correction
-}
-
 pub fn parse_event(event: &str) -> Event {
     Event::from_str(event).expect(&format!(
         "Error parsing event. Expected one of {{sunrise | sunset}}, got \"{}\".",
