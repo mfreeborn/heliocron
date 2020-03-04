@@ -1,6 +1,7 @@
 #[path = "./traits.rs"]
 mod traits;
 
+use super::structs;
 use chrono::{DateTime, FixedOffset, Local, NaiveTime, Offset, TimeZone};
 use std::fmt;
 use traits::DateTimeExt;
@@ -61,11 +62,11 @@ impl fmt::Display for SolarReport {
 }
 
 impl SolarReport {
-    pub fn new(date: DateTime<FixedOffset>, latitude: f64, longitude: f64) -> SolarReport {
+    pub fn new(date: DateTime<FixedOffset>, coordinates: structs::Coordinates) -> SolarReport {
         let mut report = SolarReport {
             date,
-            latitude,
-            longitude,
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
             ..Default::default()
         };
 
@@ -183,8 +184,12 @@ mod tests {
     #[test]
     fn test_solar_report_new() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates {
+            latitude: 0.0,
+            longitude: 0.0,
+        };
         // Default trait should handle the rest
-        let _new_report = SolarReport::new(date, 0.0, 0.0);
+        let _new_report = SolarReport::new(date, coordinates);
     }
     #[test]
     fn test_sunrise_sunset() {

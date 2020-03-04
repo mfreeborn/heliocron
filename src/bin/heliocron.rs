@@ -4,9 +4,7 @@ use chrono::{Duration, FixedOffset, Local, TimeZone};
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
-use heliocron::enums;
-use heliocron::parsers;
-use heliocron::report;
+use heliocron::{enums, parsers, report, structs};
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -19,11 +17,11 @@ struct Cli {
     #[structopt(flatten)]
     date_args: DateArgs,
 
-    #[structopt(short = "l", long = "latitude", default_value = "51.0782N", parse(from_str=parsers::parse_latlon))]
-    latitude: f64,
+    #[structopt(short = "l", long = "latitude", default_value = "51.0782N")]
+    latitude: String,
 
-    #[structopt(short = "o", long = "longitude", default_value = "4.0583W", parse(from_str=parsers::parse_latlon))]
-    longitude: f64,
+    #[structopt(short = "o", long = "longitude", default_value = "4.0583W")]
+    longitude: String,
 }
 
 #[derive(Debug, StructOpt)]
@@ -100,10 +98,9 @@ fn main() {
         args.date_args.time_zone.as_deref(),
     );
 
-    let latitude: f64 = args.latitude;
-    let longitude: f64 = args.longitude;
+    let coordinates = structs::Coordinates::from_decimal_degrees(&args.latitude, &args.longitude);
 
-    let report = report::SolarReport::new(date, latitude, longitude);
+    let report = report::SolarReport::new(date, coordinates);
 
     match Cli::from_args().sub_cmd {
         SubCommand::Report {} => println!("{}", report),
