@@ -4,6 +4,7 @@ use chrono::{Duration, FixedOffset, Local, TimeZone};
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
+use heliocron::enums;
 use heliocron::parsers;
 use heliocron::report;
 
@@ -47,7 +48,7 @@ enum SubCommand {
             long = "event", 
             parse(from_str=parsers::parse_event)
         )]
-        event: String,
+        event: enums::Event,
     },
 }
 
@@ -63,11 +64,10 @@ struct DateArgs {
     time_zone: Option<String>,
 }
 
-fn wait(offset: Duration, report: report::SolarReport, event: String) {
-    let event_time = match event.as_str() {
-        "sunrise" => report.get_sunrise(),
-        "sunset" => report.get_sunset(),
-        _ => panic!("Expected an event to be one of {sunrise | sunset}"),
+fn wait(offset: Duration, report: report::SolarReport, event: enums::Event) {
+    let event_time = match event {
+        enums::Event::Sunrise => report.get_sunrise(),
+        enums::Event::Sunset => report.get_sunset(),
     };
 
     let sleep_until = event_time + offset;

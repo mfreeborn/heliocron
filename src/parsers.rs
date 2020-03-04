@@ -1,4 +1,8 @@
+use std::str::FromStr;
+
 use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, TimeZone};
+
+use super::enums::Event;
 
 pub fn parse_date(
     date: Option<&str>,
@@ -50,12 +54,11 @@ pub fn parse_latlon(latlon: &str) -> f64 {
     latlon * compass_correction
 }
 
-pub fn parse_event(event: &str) -> String {
-    let event = match event {
-        "sunrise" | "sunset" => event,
-        _ => panic!("--event argument must be one of: 'sunrise' | 'sunset'"),
-    };
-    event.to_string()
+pub fn parse_event(event: &str) -> Event {
+    Event::from_str(event).expect(&format!(
+        "Error parsing event. Expected one of {{sunrise | sunset}}, got \"{}\".",
+        event
+    ))
 }
 
 pub fn parse_offset(offset: &str) -> Duration {
@@ -125,5 +128,26 @@ mod tests {
     #[should_panic]
     fn test_parse_date_wrong_tz_fails() {
         let _result = parse_date(Some("2020-03-25"), "%Y-%m-%d", Some("00:00"));
+    }
+
+    #[test]
+    fn test_parse_event() {
+        let params = [
+            (Event::Sunrise, "sunrise"),
+            (Event::Sunrise, "sunRISE"),
+            (Event::Sunrise, "  sunrisE"),
+            (Event::Sunset, "sunset"),
+            (Event::Sunset, "sunSET  "),
+        ];
+
+        for (expected, arg) in params.iter() {
+            assert_eq!(*expected, parse_event(*arg));
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_parse_event_fails() {
+        let _event = parse_event("sun rise");
     }
 }
