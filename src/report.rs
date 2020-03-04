@@ -176,3 +176,66 @@ impl SolarReport {
         self.solar_noon = SolarReport::day_fraction_to_time(solar_noon)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_solar_report_new() {
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        // Default trait should handle the rest
+        let _new_report = SolarReport::new(date, 0.0, 0.0);
+    }
+    #[test]
+    fn test_sunrise_sunset() {
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let mut report = SolarReport {
+            date,
+            solar_noon: NaiveTime::from_hms(0, 0, 0),
+            sunrise: NaiveTime::from_hms(0, 0, 0),
+            sunset: NaiveTime::from_hms(0, 0, 0),
+            latitude: 55.9533,
+            longitude: -3.1883,
+        };
+
+        report.run();
+        assert_eq!("06:00:37", report.get_sunrise().time().to_string());
+        assert_eq!("18:37:30", report.get_sunset().time().to_string());
+
+        let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
+        let mut report = SolarReport {
+            date,
+            solar_noon: NaiveTime::from_hms(0, 0, 0),
+            sunrise: NaiveTime::from_hms(0, 0, 0),
+            sunset: NaiveTime::from_hms(0, 0, 0),
+            latitude: 55.9533,
+            longitude: -3.1883,
+        };
+
+        report.run();
+        assert_eq!("06:47:30", report.get_sunrise().time().to_string());
+        assert_eq!("19:47:42", report.get_sunset().time().to_string());
+    }
+    #[test]
+    fn test_day_fraction_to_time() {
+        let params = [
+            ("00:00:00", 0.0),
+            ("12:00:00", 0.5),
+            ("23:59:59", 0.99999),
+            ("01:23:45", 0.05816),
+            ("23:42:12", 0.987639),
+        ];
+
+        for (expected, arg) in params.iter() {
+            let result = SolarReport::day_fraction_to_time(*arg).to_string();
+            assert_eq!(*expected, result);
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_day_fraction_to_time_fails() {
+        let _result = SolarReport::day_fraction_to_time(1.5).to_string();
+        let _result = SolarReport::day_fraction_to_time(-0.5).to_string();
+    }
+}
