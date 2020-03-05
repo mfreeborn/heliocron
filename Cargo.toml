@@ -9,7 +9,7 @@ programs for time periods relative to sunrise and sunset.
 documentation = "https://github.com/mfreeborn/heliocron"
 homepage = "https://github.com/mfreeborn/heliocron"
 repository = "https://github.com/mfreeborn/heliocron"
-keywords = ["cron", "crontab", "sunrise", "sunset", "cli", "unix", "linux", "scheduler"]
+keywords = ["cron", "crontab", "sunrise", "unix", "scheduler"]
 categories = ["command-line-utilities", "date-and-time", "configuration"]
 readme = "README.md"
 license = "Apache-2.0 OR MIT"
