@@ -6,13 +6,23 @@ A command line application capable of delaying execution of other programs for t
 #### 1. Pre-compiled binaries
 Simply download a pre-compiled binary from the [releases](https://github.com/mfreeborn/heliocron/releases) page.
 
-#### 2. Build from source
+#### 2. Install with cargo
+```
+$ cargo install heliocron
+.
+.
+.
+$ heliocron --version
+heliocron 0.1.3
+```
+
+#### 3. Build from source
 ```
 $ git clone https://github.com/mfreeborn/heliocron
 $ cd heliocron
 $ cargo build --release
 $ ./target/release/heliocron --version
-0.1.1
+heliocron 0.1.3
 ```
 
 ## Usage Examples
