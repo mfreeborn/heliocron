@@ -2,9 +2,21 @@
 name = "heliocron"
 version = "0.1.3"
 authors = ["Michael Freeborn <michaelfreeborn1@gmail.com>"]
+description = """
+Heliocron is a command line application written in Rust capable of delaying execution of other 
+programs for time periods relative to sunrise and sunset.
+"""
+documentation = "https://github.com/mfreeborn/heliocron"
+homepage = "https://github.com/mfreeborn/heliocron"
+repository = "https://github.com/mfreeborn/heliocron"
+keywords = ["cron", "crontab", "sunrise", "sunset", "cli", "unix", "linux", "scheduler"]
+categories = ["command-line-utilities", "date-and-time", "configuration"]
+readme = "README.md"
+license = "Apache-2.0 OR MIT"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[badges]
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 chrono = "0.4"
