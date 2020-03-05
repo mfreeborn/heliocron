@@ -167,12 +167,10 @@ impl SolarReport {
         let solar_noon =
             (720.0 - 4.0 * self.longitude - equation_of_time + time_zone * 60.0) / 1440.0;
 
-        self.sunrise = SolarReport::day_fraction_to_time(
-            ((solar_noon - hour_angle * 4.0) / 1440.0) + solar_noon,
-        );
-        self.sunset = SolarReport::day_fraction_to_time(
-            ((solar_noon + hour_angle * 4.0) / 1440.0) + solar_noon,
-        );
+        self.sunrise =
+            SolarReport::day_fraction_to_time((solar_noon * 1440.0 - hour_angle * 4.0) / 1440.0);
+        self.sunset =
+            SolarReport::day_fraction_to_time((solar_noon * 1440.0 + hour_angle * 4.0) / 1440.0);
         self.solar_noon = SolarReport::day_fraction_to_time(solar_noon)
     }
 }
@@ -188,6 +186,7 @@ mod tests {
     }
     #[test]
     fn test_sunrise_sunset() {
+        // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let mut report = SolarReport {
             date,
@@ -199,8 +198,8 @@ mod tests {
         };
 
         report.run();
-        assert_eq!("06:00:37", report.get_sunrise().time().to_string());
-        assert_eq!("18:37:30", report.get_sunset().time().to_string());
+        assert_eq!("06:00:07", report.get_sunrise().time().to_string());
+        assert_eq!("18:36:59", report.get_sunset().time().to_string());
 
         let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
         let mut report = SolarReport {
@@ -213,8 +212,8 @@ mod tests {
         };
 
         report.run();
-        assert_eq!("06:47:30", report.get_sunrise().time().to_string());
-        assert_eq!("19:47:42", report.get_sunset().time().to_string());
+        assert_eq!("06:47:03", report.get_sunrise().time().to_string());
+        assert_eq!("19:47:03", report.get_sunset().time().to_string());
     }
     #[test]
     fn test_day_fraction_to_time() {
