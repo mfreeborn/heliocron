@@ -23,7 +23,10 @@ chrono = "0.4"
 structopt = "0.3"
 
 [dev-dependencies]
+assert_cmd = "0.12"
 criterion = "0.3"
+guerrilla = "0.1"
+predicates = "1"
 
 [profile.release]
 lto = true

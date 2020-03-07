@@ -1,15 +1,14 @@
-use std::thread;
-
 use chrono::{Duration, FixedOffset, Local, TimeZone};
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
-use heliocron::{enums, parsers, report, structs};
+use heliocron::{enums, parsers, report, structs, utils};
 
 #[derive(Debug, StructOpt)]
 #[structopt(
     about = "A simple utility for finding out what time sunrise/sunset is, and executing programs relative to these events."
 )]
+#[structopt(settings = &[AppSettings::AllowLeadingHyphen])]
 struct Cli {
     #[structopt(subcommand)]
     sub_cmd: SubCommand,
@@ -28,7 +27,6 @@ struct Cli {
 enum SubCommand {
     Report {},
 
-    #[structopt(settings = &[AppSettings::AllowLeadingHyphen])]
     Wait {
         #[structopt(
             help = "Choose a delay from your chosen event (see --event) in one of the following formats: {HH:MM:SS | HH:MM}. You may prepend the delay with '-' to make it negative. A negative offset will set the delay to be before the event, whilst a positive offset will set the delay to be after the event.",
@@ -75,18 +73,7 @@ fn wait(offset: Duration, report: report::SolarReport, event: enums::Event) {
 
     let duration_to_sleep = sleep_until - local_time;
 
-    let duration_to_sleep = match duration_to_sleep.to_std() {
-        Ok(dur) => dur,
-        Err(_) => panic!("This event has already passed! Must pick a time in the future."),
-    };
-
-    println!(
-        "Thread going to sleep for {} seconds until {}. Press ctrl+C to cancel.",
-        duration_to_sleep.as_secs(),
-        sleep_until
-    );
-
-    thread::sleep(duration_to_sleep);
+    utils::sleep(duration_to_sleep, sleep_until);
 }
 
 fn main() {

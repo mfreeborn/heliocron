@@ -34,7 +34,9 @@ pub fn parse_date(
     let datetimetz = format!("{}{}", datetime, time_zone);
     let datetimetz_fmt = format!("{}%:z", datetime_fmt);
 
-    DateTime::parse_from_str(&datetimetz, &datetimetz_fmt).expect("Error parsing date!")
+    println!("{}/n{}", datetimetz, datetimetz_fmt);
+    DateTime::parse_from_str(&datetimetz, &datetimetz_fmt)
+        .expect("Error parsing date with time zone!")
 }
 pub fn parse_event(event: &str) -> Event {
     Event::from_str(event).expect(&format!(
