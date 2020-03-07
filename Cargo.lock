@@ -263,6 +263,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "guerrilla"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a7ac0c539e590efeeed11427232e6523f9fbcc4130d911ec4e6135c45cca802"
+dependencies = [
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "heck"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -278,6 +288,7 @@ dependencies = [
  "assert_cmd",
  "chrono",
  "criterion",
+ "guerrilla",
  "predicates",
  "structopt",
 ]

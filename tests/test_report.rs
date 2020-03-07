@@ -84,7 +84,7 @@ fn test_report_custom_timezone() {
     assert_report(report_long);
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_short = cmd.args(&["-t", "+05:00", "report"]).assert();
+    let report_short = cmd.args(&["-t", "-05:00", "report"]).assert();
 
     assert_report(report_short);
 }
