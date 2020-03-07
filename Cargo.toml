@@ -21,6 +21,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 chrono = "0.4"
 structopt = "0.3"
+toml = "0.5"
 
 [dev-dependencies]
 assert_cmd = "0.12"
