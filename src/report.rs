@@ -184,20 +184,13 @@ impl SolarReport {
         let solar_noon = (720.0 - 4.0 * self.coordinates.longitude - equation_of_time
             + time_zone * 60.0)
             / 1440.0;
-        println!("{:?}", self.coordinates);
 
         let sunrise_fraction = solar_noon - (hour_angle * 4.0) / 1440.0;
         let sunset_fraction = solar_noon + (hour_angle * 4.0) / 1440.0;
-        println!("{:?}", sunrise_fraction);
-        println!("{:?}", sunset_fraction);
 
         self.sunrise = self.day_fraction_to_datetime(sunrise_fraction);
         self.sunset = self.day_fraction_to_datetime(sunset_fraction);
         self.solar_noon = self.day_fraction_to_datetime(solar_noon);
-
-        println!("{:?}", self.sunrise);
-        println!("{:?}", self.sunset);
-        println!("{:?}", self.solar_noon);
     }
 }
 
@@ -244,6 +237,20 @@ mod tests {
         report.run();
         assert_eq!("06:47:03", report.sunrise.time().to_string());
         assert_eq!("19:47:03", report.sunset.time().to_string());
+
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "174.0W");
+        let mut report = SolarReport {
+            date,
+            coordinates,
+            solar_noon: date,
+            sunrise: date,
+            sunset: date,
+        };
+
+        report.run();
+        assert_eq!("2020-03-25 17:23:21 +00:00", report.sunrise.to_string());
+        assert_eq!("2020-03-26 06:00:14 +00:00", report.sunset.to_string());
     }
 
     #[test]
