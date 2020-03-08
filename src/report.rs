@@ -2,31 +2,31 @@
 mod traits;
 
 use super::structs;
-use chrono::{DateTime, FixedOffset, Local, NaiveTime, Offset, TimeZone};
+use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, Offset, TimeZone, Timelike};
 use std::fmt;
 use traits::DateTimeExt;
 
 #[derive(Debug)]
 pub struct SolarReport {
-    solar_noon: NaiveTime,
-    sunrise: NaiveTime,
-    sunset: NaiveTime,
+    solar_noon: DateTime<FixedOffset>,
+    sunrise: DateTime<FixedOffset>,
+    sunset: DateTime<FixedOffset>,
 
     date: DateTime<FixedOffset>,
-    latitude: f64,
-    longitude: f64,
+    coordinates: structs::Coordinates,
 }
 
 impl Default for SolarReport {
     fn default() -> SolarReport {
         let local_time = Local::now();
+        let default_datetime =
+            local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
         SolarReport {
-            solar_noon: NaiveTime::from_hms(0, 0, 0),
-            sunrise: NaiveTime::from_hms(0, 0, 0),
-            sunset: NaiveTime::from_hms(0, 0, 0),
+            solar_noon: default_datetime,
+            sunrise: default_datetime,
+            sunset: default_datetime,
             date: local_time.with_timezone(&FixedOffset::from_offset(local_time.offset())),
-            latitude: 0.0,
-            longitude: 0.0,
+            coordinates: structs::Coordinates::from_decimal_degrees("0.0N", "0.0W"),
         }
     }
 }
@@ -45,8 +45,8 @@ impl fmt::Display for SolarReport {
         Solar noon is at:    {}\n\
         Sunset is at:        {}\n\n\
         The day length is:   {}",
-            self.latitude,
-            self.longitude,
+            self.coordinates.latitude,
+            self.coordinates.longitude,
             self.date,
             self.sunrise,
             self.solar_noon,
@@ -65,8 +65,7 @@ impl SolarReport {
     pub fn new(date: DateTime<FixedOffset>, coordinates: structs::Coordinates) -> SolarReport {
         let mut report = SolarReport {
             date,
-            latitude: coordinates.latitude,
-            longitude: coordinates.longitude,
+            coordinates,
             ..Default::default()
         };
 
@@ -77,25 +76,41 @@ impl SolarReport {
         report
     }
 
-    fn day_fraction_to_time(day_fraction: f64) -> NaiveTime {
-        // day_fraction should be 0 <= day_fraction < 1
+    fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
+        let mut date = self.date;
+
+        if day_fraction < 0.0 {
+            date = date - Duration::days(1);
+            day_fraction = day_fraction.abs();
+        } else if day_fraction >= 1.0 {
+            date = date + Duration::days(1);
+            day_fraction -= 1.0;
+        }
+
         let hour_fraction = day_fraction * 24.0;
         let minute_fraction = hour_fraction.fract() * 60.0;
         let second_fraction = minute_fraction.fract() * 60.0;
 
-        NaiveTime::from_hms(
+        let time = NaiveTime::from_hms(
             hour_fraction.trunc() as u32,
             minute_fraction.trunc() as u32,
             second_fraction.trunc() as u32,
-        )
+        );
+
+        date.with_hour(time.hour())
+            .unwrap()
+            .with_minute(time.minute())
+            .unwrap()
+            .with_second(time.second())
+            .unwrap()
     }
 
     pub fn get_sunrise(&self) -> DateTime<FixedOffset> {
-        self.date.date().and_time(self.sunrise).unwrap()
+        self.sunrise
     }
 
     pub fn get_sunset(&self) -> DateTime<FixedOffset> {
-        self.date.date().and_time(self.sunset).unwrap()
+        self.sunset
     }
 
     pub fn run(&mut self) {
@@ -160,19 +175,29 @@ impl SolarReport {
             .to_degrees();
 
         let hour_angle = (((90.833f64.to_radians().cos()
-            / (self.latitude.to_radians().cos() * solar_declination.to_radians().cos()))
-            - self.latitude.to_radians().tan() * solar_declination.to_radians().tan())
+            / (self.coordinates.latitude.to_radians().cos()
+                * solar_declination.to_radians().cos()))
+            - self.coordinates.latitude.to_radians().tan() * solar_declination.to_radians().tan())
         .acos())
         .to_degrees();
 
-        let solar_noon =
-            (720.0 - 4.0 * self.longitude - equation_of_time + time_zone * 60.0) / 1440.0;
+        let solar_noon = (720.0 - 4.0 * self.coordinates.longitude - equation_of_time
+            + time_zone * 60.0)
+            / 1440.0;
+        println!("{:?}", self.coordinates);
 
-        self.sunrise =
-            SolarReport::day_fraction_to_time((solar_noon * 1440.0 - hour_angle * 4.0) / 1440.0);
-        self.sunset =
-            SolarReport::day_fraction_to_time((solar_noon * 1440.0 + hour_angle * 4.0) / 1440.0);
-        self.solar_noon = SolarReport::day_fraction_to_time(solar_noon)
+        let sunrise_fraction = solar_noon - (hour_angle * 4.0) / 1440.0;
+        let sunset_fraction = solar_noon + (hour_angle * 4.0) / 1440.0;
+        println!("{:?}", sunrise_fraction);
+        println!("{:?}", sunset_fraction);
+
+        self.sunrise = self.day_fraction_to_datetime(sunrise_fraction);
+        self.sunset = self.day_fraction_to_datetime(sunset_fraction);
+        self.solar_noon = self.day_fraction_to_datetime(solar_noon);
+
+        println!("{:?}", self.sunrise);
+        println!("{:?}", self.sunset);
+        println!("{:?}", self.solar_noon);
     }
 }
 
@@ -193,53 +218,69 @@ mod tests {
     fn test_sunrise_sunset() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W");
         let mut report = SolarReport {
             date,
-            solar_noon: NaiveTime::from_hms(0, 0, 0),
-            sunrise: NaiveTime::from_hms(0, 0, 0),
-            sunset: NaiveTime::from_hms(0, 0, 0),
-            latitude: 55.9533,
-            longitude: -3.1883,
+            coordinates,
+            solar_noon: date,
+            sunrise: date,
+            sunset: date,
         };
 
         report.run();
-        assert_eq!("06:00:07", report.get_sunrise().time().to_string());
-        assert_eq!("18:36:59", report.get_sunset().time().to_string());
+        assert_eq!("06:00:07", report.sunrise.time().to_string());
+        assert_eq!("18:36:59", report.sunset.time().to_string());
 
         let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W");
         let mut report = SolarReport {
             date,
-            solar_noon: NaiveTime::from_hms(0, 0, 0),
-            sunrise: NaiveTime::from_hms(0, 0, 0),
-            sunset: NaiveTime::from_hms(0, 0, 0),
-            latitude: 55.9533,
-            longitude: -3.1883,
+            coordinates,
+            solar_noon: date,
+            sunrise: date,
+            sunset: date,
         };
 
         report.run();
-        assert_eq!("06:47:03", report.get_sunrise().time().to_string());
-        assert_eq!("19:47:03", report.get_sunset().time().to_string());
+        assert_eq!("06:47:03", report.sunrise.time().to_string());
+        assert_eq!("19:47:03", report.sunset.time().to_string());
+    }
+
+    #[test]
+    fn test_day_fraction_to_time_underoverflow() {
+        // when a location is selected which is in a different time zone, it is possible for the sunrise/sunset to
+        // occur either the following or previous day. This results in a day fraction which is either negative
+        // or >= 1
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W");
+        let report = SolarReport::new(date, coordinates);
+
+        let params = [
+            ("2020-03-26 12:00:00 +00:00", 1.5),
+            ("2020-03-24 12:00:00 +00:00", -0.5),
+        ];
+
+        for (expected_time, arg) in params.iter() {
+            let result = report.day_fraction_to_datetime(*arg);
+            assert_eq!(*expected_time, result.to_string());
+        }
     }
     #[test]
     fn test_day_fraction_to_time() {
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W");
+        let report = SolarReport::new(date, coordinates);
         let params = [
-            ("00:00:00", 0.0),
-            ("12:00:00", 0.5),
-            ("23:59:59", 0.99999),
-            ("01:23:45", 0.05816),
-            ("23:42:12", 0.987639),
+            ("2020-03-25 00:00:00 +00:00", 0.0),
+            ("2020-03-25 12:00:00 +00:00", 0.5),
+            ("2020-03-25 23:59:59 +00:00", 0.99999),
+            ("2020-03-25 01:23:45 +00:00", 0.05816),
+            ("2020-03-25 23:42:12 +00:00", 0.987639),
         ];
 
         for (expected, arg) in params.iter() {
-            let result = SolarReport::day_fraction_to_time(*arg).to_string();
+            let result = report.day_fraction_to_datetime(*arg).to_string();
             assert_eq!(*expected, result);
         }
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_day_fraction_to_time_fails() {
-        let _result = SolarReport::day_fraction_to_time(1.5).to_string();
-        let _result = SolarReport::day_fraction_to_time(-0.5).to_string();
     }
 }
