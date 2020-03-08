@@ -58,3 +58,50 @@ Sunset is at:        21:04:53
 
 The day length is:   15:50:01
 ```
+
+### Configuration
+Heliocron supports reading some configuration options from a file located at ~/.config/helicron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise Heliocron will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
+```
+~/.config/heliocron.toml
+# set the default location to Buckingham Palace
+latitude = "51.5014N"
+longitude = "0.1419W"
+```
+Now, using Heliocron without providing specific coordinates will yield the following output:
+```
+$ heliocron -d 2020-03-08 report
+LOCATION
+--------
+Latitude:  51.5014
+Longitude: -0.1419
+
+DATE
+----
+2020-03-08 12:00:00 +00:00
+
+Sunrise is at:       06:29:01
+Solar noon is at:    12:11:12
+Sunset is at:        17:53:23
+
+The day length is:   11:24:22
+```
+Observe that the location is set according to the contents of the configuration file.
+
+Arguments passed in via the command line will override those set in the configuration file. Perhaps we want to check what is happening over at Windsor Castle without changing the configuration file:
+```
+$ heliocron -d 2020-03-08 -l 51.4839N -o 0.6044W report
+LOCATION
+--------
+Latitude:  51.4839
+Longitude: -0.6044
+
+DATE
+----
+2020-03-08 12:00:00 +00:00
+
+Sunrise is at:       06:30:51
+Solar noon is at:    12:13:03
+Sunset is at:        17:55:15
+
+The day length is:   11:24:24
+```
