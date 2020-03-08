@@ -20,6 +20,8 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 chrono = "0.4"
+dirs = "2.0"
+serde = "1"
 structopt = "0.3"
 toml = "0.5"
 
