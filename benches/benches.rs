@@ -1,9 +1,9 @@
-use chrono::{FixedOffset, TimeZone};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use chrono::{DateTime, FixedOffset, TimeZone};
+use criterion::{criterion_group, criterion_main, Criterion};
 use heliocron::{report, structs};
 
-fn run_report(report: &mut report::SolarReport) -> () {
-    report.run()
+fn run_report(date: DateTime<FixedOffset>, coordinates: structs::Coordinates) -> () {
+    report::SolarReport::new(date, coordinates);
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -15,9 +15,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         longitude: 4.0,
     };
 
-    let mut rep = report::SolarReport::new(date, coordinates);
-
-    c.bench_function("run_report", |b| b.iter(|| run_report(black_box(&mut rep))));
+    c.bench_function("run_report", |b| b.iter(|| run_report(date, coordinates)));
 }
 
 criterion_group!(benches, criterion_benchmark);
