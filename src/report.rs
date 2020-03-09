@@ -105,7 +105,7 @@ impl SolarReport {
             .unwrap()
     }
 
-    pub fn run(&mut self) {
+    fn run(&mut self) {
         let time_zone = self.date.offset().fix().local_minus_utc() as f64 / 3600.0;
 
         let julian_date: f64 = self.date.to_julian_date();
