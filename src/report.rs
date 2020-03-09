@@ -8,12 +8,12 @@ use traits::DateTimeExt;
 
 #[derive(Debug)]
 pub struct SolarReport {
-    solar_noon: DateTime<FixedOffset>,
-    sunrise: DateTime<FixedOffset>,
-    sunset: DateTime<FixedOffset>,
+    pub solar_noon: DateTime<FixedOffset>,
+    pub sunrise: DateTime<FixedOffset>,
+    pub sunset: DateTime<FixedOffset>,
 
-    date: DateTime<FixedOffset>,
-    coordinates: structs::Coordinates,
+    pub date: DateTime<FixedOffset>,
+    pub coordinates: structs::Coordinates,
 }
 
 impl Default for SolarReport {
@@ -103,14 +103,6 @@ impl SolarReport {
             .unwrap()
             .with_second(time.second())
             .unwrap()
-    }
-
-    pub fn get_sunrise(&self) -> DateTime<FixedOffset> {
-        self.sunrise
-    }
-
-    pub fn get_sunset(&self) -> DateTime<FixedOffset> {
-        self.sunset
     }
 
     pub fn run(&mut self) {
