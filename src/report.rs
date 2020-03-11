@@ -1,9 +1,11 @@
 #[path = "./traits.rs"]
 mod traits;
 
-use super::structs;
-use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, Offset, TimeZone, Timelike};
 use std::fmt;
+
+use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, Offset, TimeZone, Timelike};
+
+use super::{structs, structs::Coordinate};
 use traits::DateTimeExt;
 
 #[derive(Debug)]
@@ -26,7 +28,7 @@ impl Default for SolarReport {
             sunrise: default_datetime,
             sunset: default_datetime,
             date: local_time.with_timezone(&FixedOffset::from_offset(local_time.offset())),
-            coordinates: structs::Coordinates::from_decimal_degrees("0.0N", "0.0W"),
+            coordinates: structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap(),
         }
     }
 }
@@ -36,8 +38,8 @@ impl fmt::Display for SolarReport {
         let fmt_str = format!(
             "LOCATION\n\
         --------\n\
-        Latitude:  {}\n\
-        Longitude: {}\n\n\
+        {}\n\
+        {}\n\n\
         DATE\n\
         ----\n\
         {}\n\n\
@@ -173,7 +175,7 @@ impl SolarReport {
         .acos())
         .to_degrees();
 
-        let solar_noon = (720.0 - 4.0 * self.coordinates.longitude - equation_of_time
+        let solar_noon = (720.0 - 4.0 * self.coordinates.longitude.value - equation_of_time
             + time_zone * 60.0)
             / 1440.0;
 
@@ -193,8 +195,8 @@ mod tests {
     fn test_solar_report_new() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates {
-            latitude: 0.0,
-            longitude: 0.0,
+            latitude: structs::Latitude { value: 0.0 },
+            longitude: structs::Longitude { value: 0.0 },
         };
         // Default trait should handle the rest
         let _new_report = SolarReport::new(date, coordinates);
@@ -203,7 +205,8 @@ mod tests {
     fn test_sunrise_sunset() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W");
+        let coordinates =
+            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
         let mut report = SolarReport {
             date,
             coordinates,
@@ -217,7 +220,8 @@ mod tests {
         assert_eq!("18:36:59", report.sunset.time().to_string());
 
         let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W");
+        let coordinates =
+            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
         let mut report = SolarReport {
             date,
             coordinates,
@@ -231,7 +235,7 @@ mod tests {
         assert_eq!("19:47:03", report.sunset.time().to_string());
 
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "174.0W");
+        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "174.0W").unwrap();
         let mut report = SolarReport {
             date,
             coordinates,
@@ -251,7 +255,7 @@ mod tests {
         // occur either the following or previous day. This results in a day fraction which is either negative
         // or >= 1
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W");
+        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap();
         let report = SolarReport::new(date, coordinates);
 
         let params = [
@@ -267,7 +271,7 @@ mod tests {
     #[test]
     fn test_day_fraction_to_time() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W");
+        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap();
         let report = SolarReport::new(date, coordinates);
         let params = [
             ("2020-03-25 00:00:00 +00:00", 0.0),

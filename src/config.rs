@@ -5,9 +5,10 @@ use dirs;
 use serde::Deserialize;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
-use toml;
 
-use super::{enums, parsers, structs};
+use super::{enums, errors::HeliocronError, parsers, structs};
+
+type Result<T> = std::result::Result<T, HeliocronError>;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -82,19 +83,19 @@ struct TomlConfig {
 }
 
 impl TomlConfig {
-    fn new() -> TomlConfig {
-        TomlConfig {
-            latitude: None,
-            longitude: None,
-        }
-    }
+    // fn new() -> TomlConfig {
+    //     TomlConfig {
+    //         latitude: None,
+    //         longitude: None,
+    //     }
+    // }
 
-    fn from_toml(config: Result<TomlConfig, toml::de::Error>) -> TomlConfig {
-        match config {
-            Ok(conf) => conf,
-            _ => TomlConfig::new(),
-        }
-    }
+    // fn from_toml(config: Result<TomlConfig>) -> TomlConfig {
+    //     match config {
+    //         Ok(conf) => conf,
+    //         _ => TomlConfig::new(),
+    //     }
+    // }
 }
 
 #[derive(Debug)]
@@ -106,17 +107,17 @@ pub struct Config {
 }
 
 impl Config {
-    fn merge_toml(mut self, toml_config: TomlConfig) -> Self {
-        if let (Some(latitude), Some(longitude)) = (toml_config.latitude, toml_config.longitude) {
-            self.coordinates = structs::Coordinates::from_decimal_degrees(&latitude, &longitude)
-        }
-        self
-    }
+    // fn merge_toml(mut self, toml_config: TomlConfig) -> Result<Self> {
+    //     if let (Some(latitude), Some(longitude)) = (toml_config.latitude, toml_config.longitude) {
+    //         self.coordinates = structs::Coordinates::from_decimal_degrees(&latitude, &longitude)?
+    //     }
+    //     Ok(self)
+    // }
 
-    fn merge_cli_args(mut self, cli_args: Cli) -> Self {
+    fn merge_cli_args(mut self, cli_args: Cli) -> Result<Self> {
         // merge in location if set. Structopt requires either both or neither of lat and long to be set
         if let (Some(latitude), Some(longitude)) = (cli_args.latitude, cli_args.longitude) {
-            self.coordinates = structs::Coordinates::from_decimal_degrees(&latitude, &longitude)
+            self.coordinates = structs::Coordinates::from_decimal_degrees(&latitude, &longitude)?
         }
 
         // set the date
@@ -132,16 +133,16 @@ impl Config {
         // set the subcommand to execute
         self.subcommand = Some(cli_args.subcommand);
 
-        self
+        Ok(self)
     }
 }
 
-pub fn get_config() -> Config {
+pub fn get_config() -> Result<Config> {
     // master function for collecting all config variables and returning a single runtime configuration
 
     // 0. Set up default config
     let default_config = Config {
-        coordinates: structs::Coordinates::from_decimal_degrees("51.4769N", "0.0005W"),
+        coordinates: structs::Coordinates::from_decimal_degrees("51.4769N", "0.0005W")?,
         date: Local::today()
             .and_hms(12, 0, 0)
             .with_timezone(&FixedOffset::from_offset(Local::today().offset())),
@@ -158,7 +159,9 @@ pub fn get_config() -> Config {
     let file = fs::read_to_string(path);
 
     let config: Config = match file {
-        Ok(f) => default_config.merge_toml(TomlConfig::from_toml(toml::from_str(&f))),
+        Ok(_) => default_config,
+        // .merge_toml(TomlConfig::from_toml(toml::from_str(&f)))
+        // .unwrap(),
         // any problems with the config file and we just continue on with the default configuration
         _ => default_config,
     };
@@ -166,7 +169,7 @@ pub fn get_config() -> Config {
     // 2. Add/overwrite any currently set config from CLI arguments
     let cli_args = Cli::from_args();
 
-    let config = config.merge_cli_args(cli_args);
+    let config = config.merge_cli_args(cli_args)?;
 
-    config
+    Ok(config)
 }
