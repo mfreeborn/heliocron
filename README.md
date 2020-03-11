@@ -13,7 +13,7 @@ $ cargo install heliocron
 .
 .
 $ heliocron --version
-heliocron 0.1.3
+heliocron 0.3.0
 ```
 
 #### 3. Build from source
@@ -22,7 +22,7 @@ $ git clone https://github.com/mfreeborn/heliocron
 $ cd heliocron
 $ cargo build --release
 $ ./target/release/heliocron --version
-heliocron 0.1.3
+heliocron 0.3.0
 ```
 
 ## Usage Examples
@@ -45,8 +45,8 @@ Ever wondered what time sunrise is in Edinburgh on 7th May 2065?
 $ heliocron -d "7 May 2065" -f "%e %B %Y" -l 55.9533N -o 3.1883W report
 LOCATION
 --------
-Latitude:  55.9533
-Longitude: -3.1883
+Latitude:  55.9533N
+Longitude: 3.1883W
 
 DATE
 ----
@@ -72,8 +72,8 @@ Now, using Heliocron without providing specific coordinates will yield the follo
 $ heliocron -d 2020-03-08 report
 LOCATION
 --------
-Latitude:  51.5014
-Longitude: -0.1419
+Latitude:  51.5014N
+Longitude: 0.1419W
 
 DATE
 ----
@@ -92,8 +92,8 @@ Arguments passed in via the command line will override those set in the configur
 $ heliocron -d 2020-03-08 -l 51.4839N -o 0.6044W report
 LOCATION
 --------
-Latitude:  51.4839
-Longitude: -0.6044
+Latitude:  51.4839N
+Longitude: 0.6044W
 
 DATE
 ----

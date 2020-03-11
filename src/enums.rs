@@ -1,4 +1,8 @@
-use std::str::FromStr;
+use std::result;
+
+use super::errors::{ConfigErrorKind, HeliocronError};
+
+type Result<T> = result::Result<T, HeliocronError>;
 
 #[derive(Debug, PartialEq)]
 pub enum Event {
@@ -6,16 +10,13 @@ pub enum Event {
     Sunset,
 }
 
-impl FromStr for Event {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let s: &str = &s.trim().to_lowercase();
-
-        match s {
-            "sunrise" => Ok(Self::Sunrise),
-            "sunset" => Ok(Self::Sunset),
-            _ => Err(()),
+impl Event {
+    pub fn new(event: &str) -> Result<Event> {
+        let event = event.trim().to_lowercase();
+        match event.as_str() {
+            "sunrise" => Ok(Event::Sunrise),
+            "sunset" => Ok(Event::Sunset),
+            _ => Err(HeliocronError::Config(ConfigErrorKind::InvalidEvent)),
         }
     }
 }

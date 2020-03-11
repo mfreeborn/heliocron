@@ -1,6 +1,6 @@
 [package]
 name = "heliocron"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Michael Freeborn <michaelfreeborn1@gmail.com>"]
 description = """
 Heliocron is a command line application written in Rust capable of delaying execution of other 
@@ -28,7 +28,6 @@ toml = "0.5"
 [dev-dependencies]
 assert_cmd = "0.12"
 criterion = "0.3"
-guerrilla = "0.1"
 predicates = "1"
 
 [profile.release]

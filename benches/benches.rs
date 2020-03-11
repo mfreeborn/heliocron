@@ -11,8 +11,8 @@ fn criterion_benchmark(c: &mut Criterion) {
     let date = FixedOffset::east(0).ymd(2020, 2, 25).and_hms(12, 0, 0);
 
     let coordinates = structs::Coordinates {
-        latitude: 51.0,
-        longitude: 4.0,
+        latitude: structs::Latitude { value: 51.0 },
+        longitude: structs::Longitude { value: 4.0 },
     };
 
     c.bench_function("run_report", |b| b.iter(|| run_report(date, coordinates)));
