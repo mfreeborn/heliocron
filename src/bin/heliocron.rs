@@ -27,7 +27,7 @@ fn run_heliocron() -> Result<(), errors::HeliocronError> {
 
     match config.subcommand {
         Some(config::Subcommand::Report {}) => println!("{}", report),
-        Some(config::Subcommand::Wait { offset, event }) => wait(offset, report, event),
+        Some(config::Subcommand::Wait { offset, event }) => wait(offset?, report, event?),
         // will never match None as this is caught earlier by StructOpt
         None => println!("No subcommand provided!"),
     }

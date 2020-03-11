@@ -1,24 +1,25 @@
-use std::str::FromStr;
+use std::result;
 
 use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, TimeZone};
 
-use super::enums::Event;
+use super::{
+    enums::Event,
+    errors::{ConfigErrorKind, HeliocronError},
+};
+
+type Result<T> = result::Result<T, HeliocronError>;
 
 pub fn parse_date(
-    date: Option<&str>,
+    date: &str,
     date_fmt: &str,
     time_zone: Option<&str>,
-) -> DateTime<FixedOffset> {
+) -> Result<DateTime<FixedOffset>> {
     // default date format
     let time_fmt = "%H:%M:%S";
     let datetime_fmt = format!("{}T{}", date_fmt, time_fmt);
 
     // customisable date
     // e.g. 2020-02-24
-    let date = match date {
-        Some(d) => d.to_string(),
-        None => Local::today().format(date_fmt).to_string(),
-    };
     let time = "12:00:00";
     let datetime = format!("{}T{}", date, time);
 
@@ -26,8 +27,7 @@ pub fn parse_date(
     let time_zone = match time_zone {
         Some(tz) => tz.to_string(),
         None => Local
-            .datetime_from_str(&datetime, &datetime_fmt)
-            .expect("Error parsing date!")
+            .datetime_from_str(&datetime, &datetime_fmt)?
             .offset()
             .to_string(),
     };
@@ -35,17 +35,16 @@ pub fn parse_date(
     let datetimetz_fmt = format!("{}%:z", datetime_fmt);
 
     println!("{}/n{}", datetimetz, datetimetz_fmt);
-    DateTime::parse_from_str(&datetimetz, &datetimetz_fmt)
-        .expect("Error parsing date with time zone!")
-}
-pub fn parse_event(event: &str) -> Event {
-    Event::from_str(event).expect(&format!(
-        "Error parsing event. Expected one of {{sunrise | sunset}}, got \"{}\".",
-        event
-    ))
+    let datetime = DateTime::parse_from_str(&datetimetz, &datetimetz_fmt)?;
+
+    Ok(datetime)
 }
 
-pub fn parse_offset(offset: &str) -> Duration {
+pub fn parse_event(event: &str) -> Result<Event> {
+    Ok(Event::new(event)?)
+}
+
+pub fn parse_offset(offset: &str) -> Result<Duration> {
     // offset should either be %H:%M:%S or %H:%M +/- a "-" if negative
     let (positive, offset): (bool, &str) = match offset.chars().next() {
         Some('-') => (false, &offset[1..]),
@@ -54,20 +53,20 @@ pub fn parse_offset(offset: &str) -> Duration {
 
     let offset = match offset {
         offset if NaiveTime::parse_from_str(offset, "%H:%M:%S").is_ok() => {
-            NaiveTime::parse_from_str(offset, "%H:%M:%S").unwrap()
+            Ok(NaiveTime::parse_from_str(offset, "%H:%M:%S")?)
         }
         offset if NaiveTime::parse_from_str(offset, "%H:%M").is_ok() => {
-            NaiveTime::parse_from_str(offset, "%H:%M").unwrap()
+            Ok(NaiveTime::parse_from_str(offset, "%H:%M")?)
         }
-        _ => panic!("Error parsing offset! Expected the format to be one of: %H:%M:%S | %H:%M"),
-    };
+        _ => Err(HeliocronError::Config(ConfigErrorKind::ParseDate)),
+    }?;
 
     let offset = offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0));
 
     if positive {
-        offset
+        Ok(offset)
     } else {
-        -offset
+        Ok(-offset)
     }
 }
 
@@ -79,11 +78,11 @@ mod tests {
     fn test_parse_date() {
         let expected = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         // standard usage, just passing in a date
-        let result = parse_date(Some("2020-03-25"), "%Y-%m-%d", None);
+        let result = parse_date("2020-03-25", "%Y-%m-%d", None).unwrap();
         assert_eq!(expected, result);
 
         // but if you want to use a snazzy format, that is ok, too
-        let result = parse_date(Some("25 March 2020"), "%d %B %Y", None);
+        let result = parse_date("25 March 2020", "%d %B %Y", None).unwrap();
         assert_eq!(expected, result);
 
         // and so is providing a custom timezone
@@ -91,27 +90,20 @@ mod tests {
             .with_timezone(&FixedOffset::east(3600))
             .with_hour(12)
             .unwrap();
-        let result = parse_date(Some("25 Mar 2020"), "%d %b %Y", Some("+01:00"));
-        assert_eq!(expected, result);
-
-        // if no user arguments are passed in, then return the Local date
-        let expected = Local::today()
-            .and_hms(12, 0, 0)
-            .with_timezone(&FixedOffset::from_offset(Local::now().offset()));
-        let result = parse_date(None, "%Y-%m%-d", None);
+        let result = parse_date("25 Mar 2020", "%d %b %Y", Some("+01:00")).unwrap();
         assert_eq!(expected, result);
     }
 
     #[test]
     #[should_panic]
     fn test_parse_date_wrong_format_fails() {
-        let _result = parse_date(Some("2020-03-25"), "%Y-%m-%Y", None);
+        let _result = parse_date("2020-03-25", "%Y-%m-%Y", None).unwrap();
     }
 
     #[test]
     #[should_panic]
     fn test_parse_date_wrong_tz_fails() {
-        let _result = parse_date(Some("2020-03-25"), "%Y-%m-%d", Some("00:00"));
+        let _result = parse_date("2020-03-25", "%Y-%m-%d", Some("00:00")).unwrap();
     }
 
     #[test]
@@ -125,13 +117,13 @@ mod tests {
         ];
 
         for (expected, arg) in params.iter() {
-            assert_eq!(*expected, parse_event(*arg));
+            assert_eq!(*expected, parse_event(*arg).unwrap());
         }
     }
 
     #[test]
     #[should_panic]
     fn test_parse_event_fails() {
-        let _event = parse_event("sun rise");
+        let _event = parse_event("sun rise").unwrap();
     }
 }
