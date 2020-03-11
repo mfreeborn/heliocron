@@ -341,7 +341,7 @@ dependencies = [
 
 [[package]]
 name = "heliocron"
-version = "0.2.2"
+version = "0.3.0"
 dependencies = [
  "assert_cmd",
  "chrono",
