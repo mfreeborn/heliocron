@@ -1,0 +1,35 @@
+language: rust
+
+services:
+  - docker
+
+install: skip
+
+before_script:
+  - cargo install cross
+  - cargo test
+
+script:
+  - cross build --target x86_64-unknown-linux-gnu --release
+  - cross build --target armv7-unknown-linux-gnueabihf --release
+  - cross build --target arm-unknown-linux-gnueabihf --release
+
+deploy:
+  - provider: cargo
+    token:
+      secure: wAGXp2ripqxqRtdjoydc6hSwRfBkhoowB3jIv/5S3NDvQ3eGOQCZEArVjfJoqR1pG+AeXX92gEC4Q3CSIqWK6MnvURWw7TMdhhTjiNRux9rD/IOPdaG/vlGUlb0GYSAozTnaHIbInQdoT4Mk8Oj6ydjL5buU3DK1DTn1hezqP68VOuBe5y0YzWwaLFOeBp3vNhQO/DlaiJALXkslZSi43JMBLIQUeFTmSO66RWs0fXAF6NTc4rx32vcQoAwyt6ccXVUsgwG663Jn0QOdub/xPNLLBe9qXRDKqLTMH+HxtHlYyTFzoVgPPdTHyDJF0cSKYruFiiySiiUYEIDFKk7EMUliYHMx0FiNnH7tOlGHlNafpTGEm24dfoF8OULJ+DaEdCeiJmpj13oaiy81TIpwyPRh3B7c9gtiak3Fvjb0G4JSHZy+AdaiOzET4BB8YBqZvL5zizW/q3+QwlYGVLRwIVfh07ZUTVz5u/lkJh2HOVgHWFb+OSctBpBw8E1/nwF3TEeIRrEx47fqd+ftviue5Tbr2+cUvqQ3ygtfUFluji38JfGv97zhVNJ9N28jT29zTGkvV1TiX76q+Njg7rM1E2HYFQCBfTenzEfwxoaGB5KZQFNCShsZhlERYsDfV77tk41JYCJXZmgkrFQqIEnRT4K1cY6m7tiQqpqEnUojjVI=
+    on:
+      tags: true
+      branch: master 
+  - provider: releases
+    token:
+      secure: C8sLciAQkDe8P5ZKp00wuQyiF4lvr6k5tORJq9bokzqpJPRvBCZ0P0He/Z3pRQZmQ4G+t0xm/5Jqy9Xb4OHUNg93d9OgB0yYS3LjJe/FpWDD563jy86T0qVNz6abeEgWVtIXYww/39RUa4BvPWoBDTmeedbRo6mZRYeo7MgNwt9P0Gd8gBiI/ySNgmtCGnp1XLUThFxsgyiKjf5nVBNv7rs3CZZDeW+x0tMbHAkzVfqJkj263ghg2MGblc2Vu4xg+4Vx0ybiJt4tEqbOg9Uvs2GdpYhJ2DRppiHFOwZH1HXUY2Hmt3SEQitP9kRmJDYO9oWe5bfaLIkT/1kUEeYPFNkO0fue1JrjqdH1/ysRJiqmRfqAtFFcC6Ri1TslaqWTuOG/5d/issrhAFbfslQl6LbyPqCLYZkEq8Sx5YISvhU6T4IivtwAYJmPAivZs28nJ3nZ6VRTWC4enOVY+9xhfC+ZmjPZszl4q+/5uiHJNDiM28oWXu9ipobaIrZgUi3J7z0FV7pin2CHNtOToUXJ4JMx6MYBJN2vGasL0bsjSxdpQ58ajYfJCWfy2kVuL2OgenCwGw/xKFzsMPkl/Lxp7kBMmd6Y6YWx1O+K3mjxo49jFBD8QtXq4FLeHva9bmo/ysmVAvqROwFKC/5GMoqmb0xcJpnEY/adUFePa3SxHBk=
+    file:
+      - "./target/x86_64-unknown-linux-gnu/release/heliocron"
+      - "./target/armv7-unknown-linux-gnueabihf/release/heliocron"
+      - "./target/arm-unknown-linux-gnueabihf/release/heliocron"
+    cleanup: false
+    draft: true
+    on:
+      tags: true
+      branch: master
