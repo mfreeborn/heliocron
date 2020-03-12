@@ -1,3 +1,6 @@
+[![crates.io](https://img.shields.io/crates/v/heliocron.svg)](https://crates.io/crates/heliocron)
+[![crates.io](https://img.shields.io/crates/d/heliocron.svg)](https://crates.io/crates/heliocron)
+
 # Heliocron
 A command line application capable of delaying execution of other programs for time periods relative to sunrise and sunset. Inspired by [sunwait](https://github.com/risacher/sunwait), re-written in Rust.
 
