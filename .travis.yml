@@ -7,7 +7,7 @@ install: skip
 
 before_script:
   - cargo install cross
-  - cargo test
+  # - cargo test
 
 script:
   - cross build --target x86_64-unknown-linux-gnu --release
