@@ -11,7 +11,15 @@ fn test_wait_no_offset() {
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
 
     let wait_long = cmd
-        .args(&["-d", "2099-12-31", "wait", "--event", "sunset"])
+        .args(&[
+            "-d",
+            "2099-12-31",
+            "-t",
+            "+00:00",
+            "wait",
+            "--event",
+            "sunset",
+        ])
         .assert();
 
     wait_long
@@ -21,13 +29,13 @@ fn test_wait_no_offset() {
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
     let wait_short = cmd
-        .args(&["-d", "2091-10-05", "wait", "-e", "sunrise"])
+        .args(&["-d", "2091-10-05", "-t", "+00:00", "wait", "-e", "sunrise"])
         .assert();
 
     wait_short
         .success()
         .stdout(predicates::str::contains("going to sleep for"))
-        .stdout(predicates::str::contains("2091-10-05 07:07:50 +01:00"));
+        .stdout(predicates::str::contains("2091-10-05 06:07:54 +00:00"));
 }
 
 #[test]
@@ -38,6 +46,8 @@ fn test_wait_with_offset() {
         .args(&[
             "-d",
             "2099-12-31",
+            "-t",
+            "+00:00",
             "wait",
             "--event",
             "sunset",
@@ -56,6 +66,8 @@ fn test_wait_with_offset() {
         .args(&[
             "-d",
             "2091-10-05",
+            "-t",
+            "+00:00",
             "wait",
             "-e",
             "sunrise",
@@ -67,5 +79,5 @@ fn test_wait_with_offset() {
     wait_short
         .success()
         .stdout(predicates::str::contains("going to sleep for"))
-        .stdout(predicates::str::contains("2091-10-04 18:36:58 +01:00"));
+        .stdout(predicates::str::contains("2091-10-04 17:37:02 +00:00"));
 }
