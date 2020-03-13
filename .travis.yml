@@ -10,14 +10,15 @@ cache: cargo
 jobs:
   fast_finish: true
   include:
-    - stage: dependencies
-      name: install_dependencies
+    - stage: prebuild
+      name: "Install cross"
       script: cargo install cross
-    - stage: test
-      name: test_job
-      install: skip
+    - name: "Run tests"
       script: cargo test --features integration-test
     - stage: build
-    - script: cross build --target x86_64-unknown-linux-gnu --release
-    - script: cross build --target armv7-unknown-linux-gnueabihf --release
-    - script: cross build --target arm-unknown-linux-gnueabihf --release
+      name: x86_64-unknown-linux-gnu
+      script: cross build --target x86_64-unknown-linux-gnu --release
+    - name: armv7-unknown-linux-gnueabihf
+      script: cross build --target armv7-unknown-linux-gnueabihf --release
+    - name: arm-unknown-linux-gnueabihf
+      script: cross build --target arm-unknown-linux-gnueabihf --release
