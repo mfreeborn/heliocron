@@ -1,14 +1,23 @@
 language: rust
 os: linux
 dist: xenial
-install: skip
-script:
-- echo "script!"
-deploy:
-  provider: cargo
-  edge: true
-  token:
-    secure: Ees3o5zbVPXr89j6gvBLQEYEWOMtDxe8DNUg20nRc8EWBxHOKOP6+IwcLtP/9WxHShyjF2PGs82mJHhXwkL2xPFqYwRNhYU4MN9FaTQNtoua2QtbTiwAwT/aSzxDyvKN52yboAmwEgTxyHjNTYASJog60wtqAkxum/n15/nP6AqAr9cosNgxd3G71ZtvB1LXF7T6NesLjXLhJhJUmkkWx93iuNRVdNLEVOBHTUWZLhAo6afk1g2fD+8dvW8ZS0brt+mI9fEFgIo4Fa5CEkUGZVJu+VBuhIv+6ctcQ6KhUXaipxM5FdXmaVvpV5vaJHH1Z4NrbcjErlKv5JSOwN2xPNjXD647CpX0dCmXWemt1hZALmw1wORX3itGtLkHYhhk36Q/D5CxvdpqL2ofd5f8492BvR31nGdriTxi2iO7zDZgnO4kPLuD/52Q5co7+a3DAD+YRetNhsE2BB+pgACH6TVfcbWaVGmO/LXXc0BILzhEIbcGTGCFyvruvfYxPqegqkGcYffVVzjK4g/SSFGLtv8pfHnXBsoiEHKET/T8HZkQVY0pelVbClLmCVg/OciEYfEUw0Rrhymn/lSuxq06rdw4Bv0k4epo+RXCnLOgF4P4IVmf7dp07jN6BYHtY3HgvghZu+n9ADXF6ssvf90KbF2W+Aei22Mfzs2PpsGM5VA=
-  on:
-    tags: true
-    branch: master
+
+services:
+  - docker
+
+cache: cargo
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: dependencies
+      name: install_dependencies
+      script: cargo install cross
+    - stage: test
+      name: test_job
+      install: skip
+      script: cargo test --features integration-test
+    - stage: build
+    - script: cross build --target x86_64-unknown-linux-gnu --release
+    - script: cross build --target armv7-unknown-linux-gnueabihf --release
+    - script: cross build --target arm-unknown-linux-gnueabihf --release
