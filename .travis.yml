@@ -7,6 +7,10 @@ services:
 
 cache: cargo
 
+branches:
+  only:
+    - "master"
+
 jobs:
   fast_finish: true
   include:
@@ -22,3 +26,7 @@ jobs:
       script: cross build --target armv7-unknown-linux-gnueabihf --release
     - name: arm-unknown-linux-gnueabihf
       script: cross build --target arm-unknown-linux-gnueabihf --release
+
+notifications:
+  email:
+    on_success: never
