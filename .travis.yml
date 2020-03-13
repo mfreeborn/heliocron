@@ -10,6 +10,10 @@ cache: cargo
 branches:
   only:
     - "master"
+    # ruby regex to match tags. Required, or travis wont trigger
+    # deploys when a new tag is pushed.
+    # - /^\d+\.\d+\.\d+.*$/
+
 
 jobs:
   fast_finish: true
@@ -26,6 +30,24 @@ jobs:
       script: cross build --target armv7-unknown-linux-gnueabihf --release
     - name: arm-unknown-linux-gnueabihf
       script: cross build --target arm-unknown-linux-gnueabihf --release
+    - stage: deploy
+      name: "Publish to Github Releases"
+      before_deploy:
+      # Set up git user name and tag this commit
+        - git config --local user.name "Michael Freeborn"
+        - git config --local user.email "michaelfreeborn1@gmail.com"
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+        - git tag $TRAVIS_TAG
+        - ls
+      deploy:
+        provider: releases
+        token:
+          secure: oZ1OvdPnr8QvWeFyf3YWR3B1LQgO9T0dBaCdvrYLozwUwcqsa9zmAHA80d59zDyeh0wnt86JF0btUPzPDHnBVCpgnaacru71WlI8cqgbVeYTIS1zs6qGrfTnmeV4qKj3QC7qLhkAdeepbh2EPMBWQCPK8YAJjRQ/qNh+jn0S/WhdVSvD5NtfC2a9hWrXIHpm6hmh09V+g+GXJtYtLy9a0igC9M8tpHPv36kG6oaINe3AUCER8fNlrsI7/6nNrhTnTzvvbFyi10p2i2s1hIik9xMqHHTX7L4QdbVDkvVls/e2/hOMVntDS/EH5QLUkeBwzrI2hRBgkBTsTZCBQLn+E+RZIGsrcqMx7K6MA4IGpH5MLjCY+f3EH+5j+ZsGV4lMSLfs5gyTQEcoBUTmMh4rK/vGyPeft3MRR1V1q6ifoBGkw99pn4y2taIrbHawjp/P4thxJXGsy1zLlfschXzPynEHP6b9xDI/AHEeBfGOl57aFWoqgfGCCes6KdOO1qBUVy5hRLFicJLu6ApHdIe6nH39XWMxbiBERlA++IxsWULplBbv5KV1ws+BhsjDusmW+binWA/aK+S5twD//Zvs9Ym+NPqNwztW3J3jhIrhu6hgqsIXbCqxL/CD01uymWZrmnTB1GVluGzCazdm6YQZh0DtU2RYJdwrxbYzWGyg7Jg=
+        skip_cleanup: true
+        draft: true
+        on:
+          branch: master
+          # tags: true
 
 notifications:
   email:
