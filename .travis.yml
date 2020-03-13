@@ -14,7 +14,6 @@ branches:
     # deploys when a new tag is pushed.
     # - /^\d+\.\d+\.\d+.*$/
 
-
 jobs:
   fast_finish: true
   include:
