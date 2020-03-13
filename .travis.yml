@@ -21,7 +21,6 @@ deploy:
     on:
       tags: true
       branch: master
-    skip_cleanup: true
   - provider: releases
     token:
       secure: C8sLciAQkDe8P5ZKp00wuQyiF4lvr6k5tORJq9bokzqpJPRvBCZ0P0He/Z3pRQZmQ4G+t0xm/5Jqy9Xb4OHUNg93d9OgB0yYS3LjJe/FpWDD563jy86T0qVNz6abeEgWVtIXYww/39RUa4BvPWoBDTmeedbRo6mZRYeo7MgNwt9P0Gd8gBiI/ySNgmtCGnp1XLUThFxsgyiKjf5nVBNv7rs3CZZDeW+x0tMbHAkzVfqJkj263ghg2MGblc2Vu4xg+4Vx0ybiJt4tEqbOg9Uvs2GdpYhJ2DRppiHFOwZH1HXUY2Hmt3SEQitP9kRmJDYO9oWe5bfaLIkT/1kUEeYPFNkO0fue1JrjqdH1/ysRJiqmRfqAtFFcC6Ri1TslaqWTuOG/5d/issrhAFbfslQl6LbyPqCLYZkEq8Sx5YISvhU6T4IivtwAYJmPAivZs28nJ3nZ6VRTWC4enOVY+9xhfC+ZmjPZszl4q+/5uiHJNDiM28oWXu9ipobaIrZgUi3J7z0FV7pin2CHNtOToUXJ4JMx6MYBJN2vGasL0bsjSxdpQ58ajYfJCWfy2kVuL2OgenCwGw/xKFzsMPkl/Lxp7kBMmd6Y6YWx1O+K3mjxo49jFBD8QtXq4FLeHva9bmo/ysmVAvqROwFKC/5GMoqmb0xcJpnEY/adUFePa3SxHBk=
