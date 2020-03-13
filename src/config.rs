@@ -3,7 +3,6 @@ use std::{fs, path::Path};
 use chrono::{DateTime, Duration, FixedOffset, Local, TimeZone};
 use dirs;
 use serde::Deserialize;
-use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
 use super::{
@@ -16,8 +15,7 @@ type Result<T> = std::result::Result<T, HeliocronError>;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    about = "A simple utility for finding out what time sunrise/sunset is, and executing programs relative to these events.",
-    settings = &[AppSettings::AllowLeadingHyphen]
+    about = "A simple utility for finding out what time sunrise/sunset is, and executing programs relative to these events."
 )]
 struct Cli {
     #[structopt(subcommand)]
@@ -54,6 +52,7 @@ pub enum Subcommand {
             long = "offset",
             default_value = "00:00:00",
             parse(from_str=parsers::parse_offset),
+            allow_hyphen_values = true,
         )]
         offset: Result<Duration>,
 
@@ -76,7 +75,7 @@ struct DateArgs {
     #[structopt(short = "f", long = "date-format", default_value = "%Y-%m-%d")]
     date_format: String,
 
-    #[structopt(short = "t", long = "time-zone")]
+    #[structopt(short = "t", long = "time-zone", allow_hyphen_values = true)]
     time_zone: Option<String>,
 }
 
@@ -156,21 +155,28 @@ pub fn get_config() -> Result<Config> {
 
     // 1. Overwrite defaults with config from ~/.config/heliocron.toml if present
 
-    let path = dirs::config_dir()
-        .unwrap() // this shouldn't ever really be None?
-        .join(Path::new("heliocron.toml"));
+    let config: Config = if cfg!(feature = "integration-test") {
+        default_config
+    } else {
+        let path = dirs::config_dir()
+            .unwrap() // this shouldn't ever really be None?
+            .join(Path::new("heliocron.toml"));
 
-    let file = fs::read_to_string(path);
+        let file = fs::read_to_string(path);
 
-    let config: Config = match file {
-        Ok(f) => match default_config.merge_toml(TomlConfig::from_toml(toml::from_str(&f))) {
-            Ok(merged_config) => Ok(merged_config),
-            // any errors parsing the .toml raise an error
-            Err(_) => Err(HeliocronError::Config(ConfigErrorKind::InvalidTomlFile)),
-        },
-        // any problems opening the .toml file and we just continue on with the default configuration
-        Err(_) => Ok(default_config),
-    }?;
+        let config: Config = match file {
+            Ok(f) => match default_config.merge_toml(TomlConfig::from_toml(toml::from_str(&f))) {
+                Ok(merged_config) => Ok(merged_config),
+                // any errors parsing the .toml raise an error
+                Err(_) => Err(HeliocronError::Config(ConfigErrorKind::InvalidTomlFile)),
+            },
+            // any problems opening the .toml file and we just continue on with the default configuration
+            Err(_) => Ok(default_config),
+        }?;
+
+        config
+    };
+    // if we are running integration tests, we actually just want to use the default config
 
     // 2. Overwrite any currently set config with CLI arguments
     let cli_args = Cli::from_args();

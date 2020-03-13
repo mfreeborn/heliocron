@@ -18,6 +18,9 @@ edition = "2018"
 [badges]
 maintenance = { status = "actively-developed" }
 
+[features]
+integration-test = []
+
 [dependencies]
 chrono = "0.4"
 dirs = "2.0"

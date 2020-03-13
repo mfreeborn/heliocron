@@ -182,11 +182,6 @@ impl Coordinates {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[test]
-    fn tesy() {
-        let x = Latitude::from_decimal_degrees("15.6w");
-        println!("{:?}", x);
-    }
 
     #[test]
     fn test_parse_latitude() {

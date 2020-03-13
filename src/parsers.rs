@@ -34,7 +34,6 @@ pub fn parse_date(
     let datetimetz = format!("{}{}", datetime, time_zone);
     let datetimetz_fmt = format!("{}%:z", datetime_fmt);
 
-    println!("{}/n{}", datetimetz, datetimetz_fmt);
     let datetime = DateTime::parse_from_str(&datetimetz, &datetimetz_fmt)?;
 
     Ok(datetime)
