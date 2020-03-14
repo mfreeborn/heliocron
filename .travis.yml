@@ -23,7 +23,9 @@ jobs:
     - name: "Run tests"
       script: cargo test --features integration-test
     - stage: build
-      name: x86_64-unknown-linux-gnu
+      install: cargo install cross
+      script: skip
+    - name: x86_64-unknown-linux-gnu
       script: cross build --target x86_64-unknown-linux-gnu --release
     - name: armv7-unknown-linux-gnueabihf
       script: cross build --target armv7-unknown-linux-gnueabihf --release
