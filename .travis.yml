@@ -32,7 +32,7 @@ jobs:
     - stage: deploy
       name: "Publish to Github Releases"
       install: skip
-      script: ls
+      script: ls target/
       before_deploy:
       # Set up git user name and tag this commit
         - git config --local user.name "Michael Freeborn"
