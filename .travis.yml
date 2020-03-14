@@ -14,18 +14,17 @@ branches:
     # deploys when a new tag is pushed.
     # - /^\d+\.\d+\.\d+.*$/
 
+install: cargo install cross
+
 jobs:
   fast_finish: true
   include:
     - stage: prebuild
-      name: "Install cross"
-      script: cargo install cross
-    - name: "Run tests"
+      name: "Run tests"
+      install: skip
       script: cargo test --features integration-test
     - stage: build
-      install: cargo install cross
-      script: skip
-    - name: x86_64-unknown-linux-gnu
+      name: x86_64-unknown-linux-gnu
       script: cross build --target x86_64-unknown-linux-gnu --release
     - name: armv7-unknown-linux-gnueabihf
       script: cross build --target armv7-unknown-linux-gnueabihf --release
