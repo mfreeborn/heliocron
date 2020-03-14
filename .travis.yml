@@ -1,14 +1,52 @@
 language: rust
 os: linux
 dist: xenial
-install: skip
-script:
-- echo "script!"
-deploy:
-  provider: cargo
-  edge: true
-  token:
-    secure: Ees3o5zbVPXr89j6gvBLQEYEWOMtDxe8DNUg20nRc8EWBxHOKOP6+IwcLtP/9WxHShyjF2PGs82mJHhXwkL2xPFqYwRNhYU4MN9FaTQNtoua2QtbTiwAwT/aSzxDyvKN52yboAmwEgTxyHjNTYASJog60wtqAkxum/n15/nP6AqAr9cosNgxd3G71ZtvB1LXF7T6NesLjXLhJhJUmkkWx93iuNRVdNLEVOBHTUWZLhAo6afk1g2fD+8dvW8ZS0brt+mI9fEFgIo4Fa5CEkUGZVJu+VBuhIv+6ctcQ6KhUXaipxM5FdXmaVvpV5vaJHH1Z4NrbcjErlKv5JSOwN2xPNjXD647CpX0dCmXWemt1hZALmw1wORX3itGtLkHYhhk36Q/D5CxvdpqL2ofd5f8492BvR31nGdriTxi2iO7zDZgnO4kPLuD/52Q5co7+a3DAD+YRetNhsE2BB+pgACH6TVfcbWaVGmO/LXXc0BILzhEIbcGTGCFyvruvfYxPqegqkGcYffVVzjK4g/SSFGLtv8pfHnXBsoiEHKET/T8HZkQVY0pelVbClLmCVg/OciEYfEUw0Rrhymn/lSuxq06rdw4Bv0k4epo+RXCnLOgF4P4IVmf7dp07jN6BYHtY3HgvghZu+n9ADXF6ssvf90KbF2W+Aei22Mfzs2PpsGM5VA=
-  on:
-    tags: true
-    branch: master
+
+services:
+  - docker
+
+cache: cargo
+
+branches:
+  only:
+    - "master"
+    # ruby regex to match tags. Required, or travis wont trigger
+    # deploys when a new tag is pushed.
+    # - /^\d+\.\d+\.\d+.*$/
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: prebuild
+      name: "Install cross"
+      script: cargo install cross
+    - name: "Run tests"
+      script: cargo test --features integration-test
+    - stage: build
+      name: x86_64-unknown-linux-gnu
+      script: cross build --target x86_64-unknown-linux-gnu --release
+    - name: armv7-unknown-linux-gnueabihf
+      script: cross build --target armv7-unknown-linux-gnueabihf --release
+    - name: arm-unknown-linux-gnueabihf
+      script: cross build --target arm-unknown-linux-gnueabihf --release
+    - stage: deploy
+      name: "Publish to Github Releases"
+      install: skip
+      script: skip
+      deploy:
+        provider: releases
+        token:
+          secure: oZ1OvdPnr8QvWeFyf3YWR3B1LQgO9T0dBaCdvrYLozwUwcqsa9zmAHA80d59zDyeh0wnt86JF0btUPzPDHnBVCpgnaacru71WlI8cqgbVeYTIS1zs6qGrfTnmeV4qKj3QC7qLhkAdeepbh2EPMBWQCPK8YAJjRQ/qNh+jn0S/WhdVSvD5NtfC2a9hWrXIHpm6hmh09V+g+GXJtYtLy9a0igC9M8tpHPv36kG6oaINe3AUCER8fNlrsI7/6nNrhTnTzvvbFyi10p2i2s1hIik9xMqHHTX7L4QdbVDkvVls/e2/hOMVntDS/EH5QLUkeBwzrI2hRBgkBTsTZCBQLn+E+RZIGsrcqMx7K6MA4IGpH5MLjCY+f3EH+5j+ZsGV4lMSLfs5gyTQEcoBUTmMh4rK/vGyPeft3MRR1V1q6ifoBGkw99pn4y2taIrbHawjp/P4thxJXGsy1zLlfschXzPynEHP6b9xDI/AHEeBfGOl57aFWoqgfGCCes6KdOO1qBUVy5hRLFicJLu6ApHdIe6nH39XWMxbiBERlA++IxsWULplBbv5KV1ws+BhsjDusmW+binWA/aK+S5twD//Zvs9Ym+NPqNwztW3J3jhIrhu6hgqsIXbCqxL/CD01uymWZrmnTB1GVluGzCazdm6YQZh0DtU2RYJdwrxbYzWGyg7Jg=
+        skip_cleanup: true
+        draft: true
+        file:
+          - target/x86_64-unknown-linux-gnu/release/heliocron
+          - target/armv7-unknown-linux-gnueabihf/release/heliocron
+          - target/arm-unknown-linux-gnueabihf/release/heliocron
+        on:
+          branch: master
+          tags: true
+
+notifications:
+  email:
+    on_success: never
