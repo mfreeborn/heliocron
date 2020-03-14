@@ -31,13 +31,14 @@ jobs:
       script: cross build --target arm-unknown-linux-gnueabihf --release
     - stage: deploy
       name: "Publish to Github Releases"
+      install: skip
+      script: ls
       before_deploy:
       # Set up git user name and tag this commit
         - git config --local user.name "Michael Freeborn"
         - git config --local user.email "michaelfreeborn1@gmail.com"
         - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
         - git tag $TRAVIS_TAG
-        - ls
       deploy:
         provider: releases
         token:
