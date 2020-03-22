@@ -38,14 +38,14 @@ fn test_report_custom_location() {
     // assert that a report is successfully generated when an arbitrary location is given
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
     let report_long = cmd
-        .args(&["--latitude", "0.65N", "--longitude", "91.369E", "report"])
+        .args(&["--latitude", "51.0N", "--longitude", "4.36E", "report"])
         .assert();
 
     assert_report(report_long);
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
     let report_short = cmd
-        .args(&["-l", "0.65N", "-o", "91.369E", "report"])
+        .args(&["-l", "51.0N", "-o", "4.36E", "report"])
         .assert();
 
     assert_report(report_short)

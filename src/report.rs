@@ -35,6 +35,8 @@ impl Default for SolarReport {
 
 impl fmt::Display for SolarReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        println!("sunrise: {}", self.sunrise);
+        println!("sunset: {}", self.sunset);
         let fmt_str = format!(
             "LOCATION\n\
         --------\n\
