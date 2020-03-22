@@ -1,53 +1,46 @@
 language: rust
 os: linux
 dist: xenial
-
 services:
-  - docker
-
+- docker
 cache: cargo
-
 branches:
   only:
-    - "master"
-    # ruby regex to match tags. Required, or travis wont trigger
-    # deploys when a new tag is pushed.
-    - /^v\d+\.\d+\.\d+.*$/
-
+  - master
+  - "/^v\\d+\\.\\d+\\.\\d+.*$/"
 install: cargo install cross
-
 jobs:
   fast_finish: true
   include:
-    - stage: prebuild
-      name: "Run tests"
-      install: skip
-      script: cargo test --features integration-test
-    - stage: build
-      name: x86_64-unknown-linux-gnu
-      script: cross build --target x86_64-unknown-linux-gnu --release
-    - name: armv7-unknown-linux-gnueabihf
-      script: cross build --target armv7-unknown-linux-gnueabihf --release
-    - name: arm-unknown-linux-gnueabihf
-      script: cross build --target arm-unknown-linux-gnueabihf --release
-    - stage: deploy
-      name: "Publish to Github Releases"
-      install: skip
-      script: skip
-      deploy:
-        provider: releases
-        token:
-          secure: oZ1OvdPnr8QvWeFyf3YWR3B1LQgO9T0dBaCdvrYLozwUwcqsa9zmAHA80d59zDyeh0wnt86JF0btUPzPDHnBVCpgnaacru71WlI8cqgbVeYTIS1zs6qGrfTnmeV4qKj3QC7qLhkAdeepbh2EPMBWQCPK8YAJjRQ/qNh+jn0S/WhdVSvD5NtfC2a9hWrXIHpm6hmh09V+g+GXJtYtLy9a0igC9M8tpHPv36kG6oaINe3AUCER8fNlrsI7/6nNrhTnTzvvbFyi10p2i2s1hIik9xMqHHTX7L4QdbVDkvVls/e2/hOMVntDS/EH5QLUkeBwzrI2hRBgkBTsTZCBQLn+E+RZIGsrcqMx7K6MA4IGpH5MLjCY+f3EH+5j+ZsGV4lMSLfs5gyTQEcoBUTmMh4rK/vGyPeft3MRR1V1q6ifoBGkw99pn4y2taIrbHawjp/P4thxJXGsy1zLlfschXzPynEHP6b9xDI/AHEeBfGOl57aFWoqgfGCCes6KdOO1qBUVy5hRLFicJLu6ApHdIe6nH39XWMxbiBERlA++IxsWULplBbv5KV1ws+BhsjDusmW+binWA/aK+S5twD//Zvs9Ym+NPqNwztW3J3jhIrhu6hgqsIXbCqxL/CD01uymWZrmnTB1GVluGzCazdm6YQZh0DtU2RYJdwrxbYzWGyg7Jg=
-        skip_cleanup: true
-        draft: true
-        file:
-          - target/x86_64-unknown-linux-gnu/release/heliocron
-          - target/armv7-unknown-linux-gnueabihf/release/heliocron
-          - target/arm-unknown-linux-gnueabihf/release/heliocron
-        on:
-          branch: master
-          tags: true
-
+  - stage: prebuild
+    name: Run tests
+    install: skip
+    script: cargo test --features integration-test
+  - stage: build
+    name: x86_64-unknown-linux-gnu
+    script: cross build --target x86_64-unknown-linux-gnu --release
+  - name: armv7-unknown-linux-gnueabihf
+    script: cross build --target armv7-unknown-linux-gnueabihf --release
+  - name: arm-unknown-linux-gnueabihf
+    script: cross build --target arm-unknown-linux-gnueabihf --release
+  - stage: deploy
+    name: Publish to Github Releases
+    install: skip
+    script: skip
+    deploy:
+      provider: releases
+      token:
+        secure: h3kQpfc6khdkSlA50OIuOFGL7XDFt3xlDZsbNusNyZijkf1QLIsomb5JqgeocuXK2W3q35lg92MwKyEDkb38PMpU1RlV7WisR+PmoUegDtr5dGc28+hUAWE9d+d4uYmjg9B2EUGo4FAm3mM/cQ3+YhF6X84gqG0mQ46duJ35+tFxsaCq6XnulRx6y4C6t9syuRo6lDZWpuKkRxT+xMG8VznwflQw//T9TFdY/sspuWvjr1UeLQxZNpnX5AqpSX3m+GdN85JSGGpaN8W39ChC+5gGxYeFosx3Hslow9j69qU/40bKhyOqBXadD/CPlBU1MXiU6IDJ3JT4fbmgVBwpChtcyF7nC8kf+dD85Xyt3uwUEUiQFQhEsLsP2M+6SYyeO4RfObhfFYGBR3bW1bYoT0vMoHZWzwaGZcr2DjMeX/6OrLXDZQhfDMh6WgatzYb9jAyeY224hX3MuFrvJm12CsRLEUytYtZlDsdoOLpubj7ohiXebjHC1+eDQqqLrGVYETWk2De2v8PtuhvkWngQcH87MN8zBHNXnV2fDzGjGXskhdeORGNbFZv3Ji6oiwFeGuS5a8XObOk9fjiBi/wIuARvaKEcV1GhucjMnl4oRUpWBXoySZwqnWjxoexJIbex2wSiKIQqpj2DCbuxwlcQaOhM1b6uFsBpoXzvWxkF6iA=
+      skip_cleanup: true
+      draft: true
+      file:
+      - target/x86_64-unknown-linux-gnu/release/heliocron
+      - target/armv7-unknown-linux-gnueabihf/release/heliocron
+      - target/arm-unknown-linux-gnueabihf/release/heliocron
+      on:
+        branch: master
+        repo: mfreeborn/heliocron
+        tags: true
 notifications:
   email:
     on_success: never
