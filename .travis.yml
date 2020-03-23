@@ -28,7 +28,7 @@ jobs:
     name: Post build
     install: skip
     script:
-    - ls ./*.tar.gz
+    - ls $TRAVIS_BUILD_DIR
   - stage: deploy
     name: Publish to Github Releases and crates.io
     install: skip
