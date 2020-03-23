@@ -20,10 +20,10 @@ jobs:
   - stage: build
     name: x86_64-unknown-linux-gnu
     script: cross build --target x86_64-unknown-linux-gnu --release && tar -czvf $TRAVIS_BUILD_DIR/target/x86_64-unknown-linux-gnu/release/heliocron-x86_64-unknown-linux-gnu.tar.gz -C $TRAVIS_BUILD_DIR/target/x86_64-unknown-linux-gnu/release ./heliocron
-  - name: armv7-unknown-linux-gnueabihf
-    script: cross build --target armv7-unknown-linux-gnueabihf --release && tar -czvf $TRAVIS_BUILD_DIR/target/armv7-unknown-linux-gnueabihf/release/heliocron-armv7-unknown-linux-gnueabihf.tar.gz -C $TRAVIS_BUILD_DIR/target/armv7-unknown-linux-gnueabihf/release ./heliocron
   - name: arm-unknown-linux-gnueabihf
     script: cross build --target arm-unknown-linux-gnueabihf --release && tar -czvf $TRAVIS_BUILD_DIR/target/arm-unknown-linux-gnueabihf/release/heliocron-arm-unknown-linux-gnueabihf.tar.gz -C $TRAVIS_BUILD_DIR/target/arm-unknown-linux-gnueabihf/release ./heliocron
+  - name: armv7-unknown-linux-gnueabihf
+    script: cross build --target armv7-unknown-linux-gnueabihf --release && tar -czvf $TRAVIS_BUILD_DIR/target/armv7-unknown-linux-gnueabihf/release/heliocron-armv7-unknown-linux-gnueabihf.tar.gz -C $TRAVIS_BUILD_DIR/target/armv7-unknown-linux-gnueabihf/release ./heliocron
   - stage: postbuild
     name: Post build
     install: skip
