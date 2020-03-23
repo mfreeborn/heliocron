@@ -28,9 +28,11 @@ jobs:
     name: Post build
     install: skip
     script:
-    - ls ./target/*/release
+    - ls $TRAVIS_BUILD_DIR/target/x86_64-unknown-linux-gnu/release
+    - ls $TRAVIS_BUILD_DIR/target/armv7-unknown-linux-gnueabihf/release
+    - ls $TRAVIS_BUILD_DIR/target/arm-unknown-linux-gnueabihf/release
   - stage: deploy
-    name: Publish to Github Releases
+    name: Publish to Github Releases and crates.io
     install: skip
     script: skip
     deploy:
