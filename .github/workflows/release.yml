@@ -8,6 +8,8 @@ jobs:
   create-crates-io-release:
     name: create-crates-io-release
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.event.release.tag_name }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
@@ -28,9 +30,7 @@ jobs:
         run: mkdir artifacts
 
       - name: Get the release version from the tag
-        run: |
-          echo "::set-env name=VERSION::${{ github.event.release.tag_name }}"
-          echo "version is: ${{ env.VERSION }}"
+        run: echo "version is: ${{ env.VERSION }}"
 
       - name: Create GitHub release
         id: release
