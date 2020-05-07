@@ -29,8 +29,8 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      - name: Get the release version from the tag
-        run: echo "version is: ${{ env.VERSION }}"
+      - name: Show the release name
+        run: echo env.VERSION
 
       - name: Create GitHub release
         id: release
