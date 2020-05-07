@@ -18,7 +18,7 @@ jobs:
         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
     - name: Publish to crates.io
-      run: cargo publish --dry-run --allow-dirty
+      run: cargo publish --allow-dirty
 
   create-gh-pages-release:
     name: create-gh-pages-release
@@ -38,9 +38,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: test
+          tag_name: ${{ env.VERSION }}
           release_name: ${{ env.VERSION }}
-          draft: true
 
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
