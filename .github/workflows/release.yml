@@ -31,7 +31,8 @@ jobs:
           echo "event name is: ${{ github.event_name }}"
           echo "ref is: ${{ github.ref }}"
           echo "event is: ${{ github.event }}"
-          echo "push is: ${{ github.event.push }}"
+          echo "tag name is: ${{ github.event.tag_name }}"
+          echo "tag is: ${{ github.event.tag }}"
       - name: Create artifacts directory
         run: mkdir artifacts
 
@@ -44,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
+          tag_name: test
           release_name: ${{ env.VERSION }}
           draft: true
 
