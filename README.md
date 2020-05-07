@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/heliocron.svg)](https://crates.io/crates/heliocron)
 [![crates.io](https://img.shields.io/crates/d/heliocron.svg)](https://crates.io/crates/heliocron)
-[![Build Status](https://travis-ci.com/mfreeborn/heliocron.svg?branch=master)](https://travis-ci.com/mfreeborn/heliocron)
+[![Build Status](https://github.com/mfreeborn/heliocron/workflows/ci/badge.svg)](https://github.com/mfreeborn/heliocron/actions)
 
 A command line application capable of delaying execution of other programs for time periods relative to sunrise and sunset. Inspired by [sunwait](https://github.com/risacher/sunwait), re-written in Rust.
 
@@ -18,7 +18,7 @@ $ cargo install heliocron
 .
 .
 $ heliocron --version
-heliocron 0.3.1
+heliocron 0.3.3
 ```
 
 #### 3. Build from source
@@ -27,7 +27,7 @@ $ git clone https://github.com/mfreeborn/heliocron
 $ cd heliocron
 $ cargo build --release
 $ ./target/release/heliocron --version
-heliocron 0.3.1
+heliocron 0.3.3
 ```
 
 ## Usage Examples
