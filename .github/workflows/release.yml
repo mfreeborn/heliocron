@@ -9,11 +9,19 @@ jobs:
     name: create-release
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - run: cargo login ${CRATES_IO_TOKEN}
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Log in to crates.io
+      run: cargo login ${CRATES_IO_TOKEN}
       env:
         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-    - run: cargo publish
+    - run: |
+        echo "${{ secrets.CRATES_IO_TOKEN }}"
+        echo "${{ secrets }}"
+    - name: Create artifacts directory
+      run: mkdir artifacts
+    - name: Publish to crates.io
+      run: cargo publish --dry-run
 # jobs:
 #   create-release:
 #     name: create-release
