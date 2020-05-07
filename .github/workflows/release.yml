@@ -1,0 +1,51 @@
+name: release
+on:
+  pull_request:
+  - master
+
+jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - run: cargo login ${CRATES_IO_TOKEN}
+      env:
+        CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+    - run: cargo publish
+# jobs:
+#   create-release:
+#     name: create-release
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Create artifacts directory
+#         run: mkdir artifacts
+
+#       - name: Get the release version from the tag
+#         if: env.RG_VERSION == ''
+#         run: |
+#           # Apparently, this is the right way to get a tag name. Really?
+#           #
+#           # See: https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
+#           echo "::set-env name=RG_VERSION::${GITHUB_REF#refs/tags/}"
+#           echo "version is: ${{ env.RG_VERSION }}"
+#       - name: Create GitHub release
+#         id: release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: ${{ env.RG_VERSION }}
+#           release_name: ${{ env.RG_VERSION }}
+
+#       - name: Save release upload URL to artifact
+#         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+#       - name: Save version number to artifact
+#         run: echo "${{ env.RG_VERSION }}" > artifacts/release-version
+
+#       - name: Upload artifacts
+#         uses: actions/upload-artifact@v1
+#         with:
+#           name: artifacts
+#           path: artifacts
