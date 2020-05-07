@@ -8,8 +8,6 @@ jobs:
   create-crates-io-release:
     name: create-crates-io-release
     runs-on: ubuntu-latest
-    env:
-      VERSION: ${{ github.event.release.tag_name }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
@@ -25,7 +23,14 @@ jobs:
   create-gh-pages-release:
     name: create-gh-pages-release
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.event.release.tag_name }}
     steps:
+      - name: Echo stuff
+        run: |
+        echo "github is: ${{ github }}"
+        echo "event is: ${{ github.event }}"
+        echo "release is: ${{ github.event.release }}"
       - name: Create artifacts directory
         run: mkdir artifacts
 
