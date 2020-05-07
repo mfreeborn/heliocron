@@ -44,9 +44,7 @@ fn test_report_custom_location() {
     assert_report(report_long);
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_short = cmd
-        .args(&["-l", "51.0N", "-o", "4.36E", "report"])
-        .assert();
+    let report_short = cmd.args(&["-l", "51.0N", "-o", "4.36E", "report"]).assert();
 
     assert_report(report_short)
 }
