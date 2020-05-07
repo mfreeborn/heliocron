@@ -12,14 +12,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v1
     - name: Log in to crates.io
-      run: cargo login ${CRATES_IO_TOKEN}
+      run: cargo login faketoken
       env:
         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-    - run: |
-        echo "${{ secrets.CRATES_IO_TOKEN }}"
-        echo "${{ secrets }}"
     - name: Create artifacts directory
-      run: mkdir artifacts
+      run: mkdir artifacts && touch artifacts.txt
     - name: Publish to crates.io
       run: cargo publish --dry-run
 # jobs:
