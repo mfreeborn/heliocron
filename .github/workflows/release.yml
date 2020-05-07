@@ -27,11 +27,11 @@ jobs:
       VERSION:
     steps:
       - name: Get the version
-        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+        run: echo ::set-env name=VERSION::${GITHUB_REF#refs/tags/}
 
       - name: Echo stuff
         run: echo version is $VERSION
-        
+
       - name: Create artifacts directory
         run: mkdir artifacts
 
