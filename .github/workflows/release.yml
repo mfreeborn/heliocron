@@ -28,9 +28,9 @@ jobs:
     steps:
       - name: Echo stuff
         run: |
-        echo "github is: ${{ github }}"
-        echo "event is: ${{ github.event }}"
-        echo "release is: ${{ github.event.release }}"
+          echo "github is: ${{ github }}"
+          echo "event is: ${{ github.event }}"
+          echo "release is: ${{ github.event.release }}"
       - name: Create artifacts directory
         run: mkdir artifacts
 
