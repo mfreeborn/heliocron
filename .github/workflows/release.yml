@@ -73,7 +73,7 @@ jobs:
         - build: linux-armv7
           target: armv7-unknown-linux-gnueabihf
         - build: linux-armv6
-          target: armv-unknown-linux-gnueabihf
+          target: arm-unknown-linux-gnueabihf
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
