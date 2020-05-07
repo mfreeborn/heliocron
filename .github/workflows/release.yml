@@ -1,7 +1,8 @@
 name: release
 on:
   pull_request:
-  - master
+    branches:
+    - master
 
 jobs:
   create-release:
