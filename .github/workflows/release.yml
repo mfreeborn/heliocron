@@ -5,55 +5,51 @@ on:
     - master
 
 jobs:
-  create-release:
-    name: create-release
+  create-crates-io-release:
+    name: create-crates-io-release
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
+
     - name: Log in to crates.io
-      run: cargo login faketoken
+      run: cargo login ${{ env.CRATES_IO_TOKEN }}
       env:
         CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-    - name: Create artifacts directory
-      run: mkdir artifacts && touch artifacts.txt
+
     - name: Publish to crates.io
       run: cargo publish --dry-run --allow-dirty
-    - name: Build heliocron
-      run: cargo build --release
-# jobs:
-#   create-release:
-#     name: create-release
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Create artifacts directory
-#         run: mkdir artifacts
 
-#       - name: Get the release version from the tag
-#         if: env.RG_VERSION == ''
-#         run: |
-#           # Apparently, this is the right way to get a tag name. Really?
-#           #
-#           # See: https://github.community/t5/GitHub-Actions/How-to-get-just-the-tag-name/m-p/32167/highlight/true#M1027
-#           echo "::set-env name=RG_VERSION::${GITHUB_REF#refs/tags/}"
-#           echo "version is: ${{ env.RG_VERSION }}"
-#       - name: Create GitHub release
-#         id: release
-#         uses: actions/create-release@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#         with:
-#           tag_name: ${{ env.RG_VERSION }}
-#           release_name: ${{ env.RG_VERSION }}
+  create-gh-pages-release:
+    name: create-gh-pages-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create artifacts directory
+        run: mkdir artifacts
 
-#       - name: Save release upload URL to artifact
-#         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+      - name: Get the release version from the tag
+        run: |
+          echo "::set-env name=VERSION::echo ${{ github.event.release.tag_name }}"
+          echo "version is: ${{ env.VERSION }}"
 
-#       - name: Save version number to artifact
-#         run: echo "${{ env.RG_VERSION }}" > artifacts/release-version
+      - name: Create GitHub release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          draft: true
 
-#       - name: Upload artifacts
-#         uses: actions/upload-artifact@v1
-#         with:
-#           name: artifacts
-#           path: artifacts
+      - name: Save release upload URL to artifact
+        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+
+      - name: Save version number to artifact
+        run: echo "${{ env.VERSION }}" > artifacts/release-version
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
