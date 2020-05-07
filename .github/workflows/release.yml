@@ -18,7 +18,9 @@ jobs:
     - name: Create artifacts directory
       run: mkdir artifacts && touch artifacts.txt
     - name: Publish to crates.io
-      run: cargo publish --dry-run
+      run: cargo publish --dry-run --allow-dirty
+    - name: Build heliocron
+      run: cargo build --release
 # jobs:
 #   create-release:
 #     name: create-release
