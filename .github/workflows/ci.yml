@@ -39,3 +39,21 @@ jobs:
 
     - name: Run tests
       run: cargo test --verbose --features integration-test
+
+  rustfmt:
+    name: rustfmt
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        profile: minimal
+        components: rustfmt
+
+    - name: Check formatting
+      run: cargo fmt -- --check
