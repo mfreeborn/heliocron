@@ -24,13 +24,14 @@ jobs:
     name: create-gh-pages-release
     runs-on: ubuntu-latest
     env:
-      VERSION: ${{ github.event.release.tag_name }}
+      VERSION: ${{ github.event.push.tag_name }}
     steps:
       - name: Echo stuff
         run: |
-          echo "github is: ${{ github }}"
+          echo "event name is: ${{ github.event_name }}"
+          echo "ref is: ${{ github.ref }}"
           echo "event is: ${{ github.event }}"
-          echo "release is: ${{ github.event.release }}"
+          echo "push is: ${{ github.event.push }}"
       - name: Create artifacts directory
         run: mkdir artifacts
 
