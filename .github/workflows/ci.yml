@@ -14,28 +14,28 @@ jobs:
         - stable
         - beta
         include:
-          - build: pinned
-            os: ubuntu-18.04
-            rust: 1.41.0
-          - build: stable
-            os: ubuntu-18.04
-            rust: stable
-          - build: beta
-            os: ubuntu-18.04
-            rust: beta
-      steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-      
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-      
-      - name: Build heliocron
-        run: cargo build --verbose
+        - build: pinned
+          os: ubuntu-18.04
+          rust: 1.41.0
+        - build: stable
+          os: ubuntu-18.04
+          rust: stable
+        - build: beta
+          os: ubuntu-18.04
+          rust: beta
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.rust }}
+        profile: minimal
+        override: true
+    
+    - name: Build heliocron
+      run: cargo build --verbose
 
-      - name: Run tests
-        run: cargo test --verbose --features integration-test
+    - name: Run tests
+      run: cargo test --verbose --features integration-test
