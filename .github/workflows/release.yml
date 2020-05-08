@@ -20,8 +20,8 @@ jobs:
     - name: Publish to crates.io
       run: cargo publish --allow-dirty
 
-  create-gh-pages-release:
-    name: create-gh-pages-release
+  create-gh-releases-release:
+    name: create-gh-releases-release
     runs-on: ubuntu-latest
     env:
       VERSION:
@@ -53,9 +53,9 @@ jobs:
           name: artifacts
           path: artifacts
 
-  build-gh-pages-release:
-    name: build-gh-pages-release
-    needs: ["create-gh-pages-release"]
+  build-gh-releases-release:
+    name: build-gh-releases-release
+    needs: ["create-gh-releases-release"]
     runs-on: ubuntu-latest
     env:
       CARGO: cargo
