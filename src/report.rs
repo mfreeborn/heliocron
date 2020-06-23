@@ -13,6 +13,7 @@ pub struct SolarReport {
     pub solar_noon: DateTime<FixedOffset>,
     pub sunrise: DateTime<FixedOffset>,
     pub sunset: DateTime<FixedOffset>,
+    pub day_length: NaiveTime,
 
     pub date: DateTime<FixedOffset>,
     pub coordinates: structs::Coordinates,
@@ -23,10 +24,12 @@ impl Default for SolarReport {
         let local_time = Local::now();
         let default_datetime =
             local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
+        let default_day_length = NaiveTime::from_hms(0, 0, 0);
         SolarReport {
             solar_noon: default_datetime,
             sunrise: default_datetime,
             sunset: default_datetime,
+            day_length: default_day_length,
             date: local_time.with_timezone(&FixedOffset::from_offset(local_time.offset())),
             coordinates: structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap(),
         }
@@ -35,32 +38,7 @@ impl Default for SolarReport {
 
 impl fmt::Display for SolarReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        println!("sunrise: {}", self.sunrise);
-        println!("sunset: {}", self.sunset);
-        let fmt_str = format!(
-            "LOCATION\n\
-        --------\n\
-        {}\n\
-        {}\n\n\
-        DATE\n\
-        ----\n\
-        {}\n\n\
-        Sunrise is at:       {}\n\
-        Solar noon is at:    {}\n\
-        Sunset is at:        {}\n\n\
-        The day length is:   {}",
-            self.coordinates.latitude,
-            self.coordinates.longitude,
-            self.date,
-            self.sunrise,
-            self.solar_noon,
-            self.sunset,
-            NaiveTime::from_num_seconds_from_midnight(
-                (self.sunset - self.sunrise).num_seconds() as u32,
-                0
-            )
-        );
-
+        let fmt_str = self.format_report();
         write!(f, "{}", fmt_str)
     }
 }
@@ -78,6 +56,36 @@ impl SolarReport {
         // make it immutable again by default
         let report = report;
         report
+    }
+
+    fn format_report(&self) -> String {
+        format!(
+            "LOCATION\n\
+        --------\n\
+        {}\n\
+        {}\n\n\
+        DATE\n\
+        ----\n\
+        {}\n\n\
+        Sunrise is at:       {}\n\
+        Solar noon is at:    {}\n\
+        Sunset is at:        {}\n\n\
+        The day length is:   {}",
+            self.coordinates.latitude,
+            self.coordinates.longitude,
+            self.date,
+            self.sunrise,
+            self.solar_noon,
+            self.sunset,
+            self.day_length,
+        )
+    }
+
+    fn calculate_day_length(&self) -> NaiveTime {
+        NaiveTime::from_num_seconds_from_midnight(
+            (self.sunset - self.sunrise).num_seconds() as u32,
+            0,
+        )
     }
 
     fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
@@ -187,12 +195,14 @@ impl SolarReport {
         self.sunrise = self.day_fraction_to_datetime(sunrise_fraction);
         self.sunset = self.day_fraction_to_datetime(sunset_fraction);
         self.solar_noon = self.day_fraction_to_datetime(solar_noon);
+        self.day_length = self.calculate_day_length();
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_solar_report_new() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
@@ -203,6 +213,38 @@ mod tests {
         // Default trait should handle the rest
         let _new_report = SolarReport::new(date, coordinates);
     }
+
+    #[test]
+    fn test_report_content() {
+        // checks that the report contains all the corrent metrics
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates = structs::Coordinates {
+            latitude: structs::Latitude { value: 0.0 },
+            longitude: structs::Longitude { value: 0.0 },
+        };
+        let report = SolarReport::new(date, coordinates);
+        let report_str = report.format_report();
+
+        assert!(report_str.contains("LOCATION"));
+        assert!(report_str.contains("DATE"));
+        assert!(report_str.contains("Sunrise is at"));
+        assert!(report_str.contains("Solar noon is at"));
+        assert!(report_str.contains("Sunset is at"));
+        assert!(report_str.contains("The day length is"));
+
+        let sunrise_str = format!("{}", report.sunrise);
+        assert!(report_str.contains(&sunrise_str));
+
+        let solar_noon_str = format!("{}", report.solar_noon);
+        assert!(report_str.contains(&solar_noon_str));
+
+        let sunset_str = format!("{}", report.sunset);
+        assert!(report_str.contains(&sunset_str));
+
+        let day_length_str = format!("{}", report.day_length);
+        assert!(report_str.contains(&day_length_str));
+    }
+
     #[test]
     fn test_sunrise_sunset() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
@@ -215,6 +257,7 @@ mod tests {
             solar_noon: date,
             sunrise: date,
             sunset: date,
+            day_length: NaiveTime::from_hms(0, 0, 0),
         };
 
         report.run();
@@ -230,6 +273,7 @@ mod tests {
             solar_noon: date,
             sunrise: date,
             sunset: date,
+            day_length: NaiveTime::from_hms(0, 0, 0),
         };
 
         report.run();
@@ -244,6 +288,7 @@ mod tests {
             solar_noon: date,
             sunrise: date,
             sunset: date,
+            day_length: NaiveTime::from_hms(0, 0, 0),
         };
 
         report.run();
@@ -270,6 +315,7 @@ mod tests {
             assert_eq!(*expected_time, result.to_string());
         }
     }
+
     #[test]
     fn test_day_fraction_to_time() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
