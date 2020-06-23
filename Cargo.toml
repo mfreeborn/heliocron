@@ -35,7 +35,7 @@ predicates = "1"
 
 [profile.release]
 codegen-units = 1
-lto = fat
+lto = "fat"
 opt-level = 3
 
 [[bench]]
