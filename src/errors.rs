@@ -5,6 +5,7 @@ use chrono;
 #[derive(Debug)]
 pub enum HeliocronError {
     Config(ConfigErrorKind),
+    Runtime(RuntimeErrorKind),
 }
 
 #[derive(Debug)]
@@ -20,13 +21,28 @@ impl ConfigErrorKind {
         match *self {
             ConfigErrorKind::InvalidCoordindates(msg) => msg,
             ConfigErrorKind::InvalidTomlFile => {
-                "Error parsing .toml file. Ensure that it is of the correct format."
+                "Error parsing TOML file. Ensure that it is of the correct format."
             }
             ConfigErrorKind::ParseDate => {
                 "Error parsing date. Ensure the date and timezone formats are correct."
             }
-            ConfigErrorKind::InvalidEvent => {
-                "Error parsing event. Expected one of {'sunrise' | 'sunset'}"
+            ConfigErrorKind::InvalidEvent => "Error parsing event.",
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum RuntimeErrorKind {
+    NonOccurringEvent,
+    PastEvent,
+}
+
+impl RuntimeErrorKind {
+    fn as_str(&self) -> &str {
+        match *self {
+            RuntimeErrorKind::NonOccurringEvent => "The chosen event does not occur on this day.",
+            RuntimeErrorKind::PastEvent => {
+                "The chosen event occurred in the past; cannot wait a negative amount of time."
             }
         }
     }
@@ -46,6 +62,14 @@ impl std::fmt::Display for HeliocronError {
                     ConfigErrorKind::InvalidEvent => err.as_str().to_string(),
                 }
             ),
+            HeliocronError::Runtime(ref err) => write!(
+                f,
+                "Runtime error: {}",
+                match err {
+                    RuntimeErrorKind::NonOccurringEvent => err.as_str().to_string(),
+                    RuntimeErrorKind::PastEvent => err.as_str().to_string(),
+                }
+            ),
         }
     }
 }
@@ -54,6 +78,7 @@ impl error::Error for HeliocronError {
     fn description(&self) -> &str {
         match *self {
             HeliocronError::Config(ref err) => err.as_str(),
+            HeliocronError::Runtime(ref err) => err.as_str(),
         }
     }
 }
