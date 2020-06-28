@@ -20,7 +20,7 @@ pub fn wait(offset: Duration, report: report::SolarReport, event: enums::Event) 
 
     // TODO: raise/handle when the event is "Never"
 
-    let wait_until = event_time.unwrap() + offset;
+    let wait_until = event_time.datetime.unwrap() + offset;
 
     let local_time = Local::now();
     let local_time = local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
