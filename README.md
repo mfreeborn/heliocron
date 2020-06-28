@@ -18,7 +18,7 @@ $ cargo install heliocron
 .
 .
 $ heliocron --version
-heliocron 0.3.3
+heliocron 0.4.0
 ```
 
 #### 3. Build from source
@@ -27,7 +27,7 @@ $ git clone https://github.com/mfreeborn/heliocron
 $ cd heliocron
 $ cargo build --release
 $ ./target/release/heliocron --version
-heliocron 0.3.3
+heliocron 0.4.0
 ```
 
 ## Usage Examples
@@ -57,11 +57,20 @@ DATE
 ----
 2065-05-07 12:00:00 +01:00
 
-Sunrise is at:       05:14:52
-Solar noon is at:    13:09:19
-Sunset is at:        21:04:53
+Solar noon is at:         2065-05-07 13:09:19 +01:00
+The day length is:        15h 49m 51s
 
-The day length is:   15:50:01
+Sunrise is at:            2065-05-07 05:14:24 +01:00
+Sunset is at:             2065-05-07 21:04:15 +01:00
+
+Civil dawn is at:         2065-05-07 04:27:31 +01:00
+Civil dusk is at:         2065-05-07 21:51:08 +01:00
+
+Nautical dawn is at:      2065-05-07 03:19:56 +01:00
+Nautical dusk is at:      2065-05-07 22:58:43 +01:00
+
+Astronomical dawn is at:  Never
+Astronomical dusk is at:  Never
 ```
 
 ### Configuration
@@ -77,18 +86,27 @@ Now, using Heliocron without providing specific coordinates will yield the follo
 $ heliocron -d 2020-03-08 report
 LOCATION
 --------
-Latitude:  51.5014N
-Longitude: 0.1419W
+Latitude: 51.4769N
+Longitude: 0.0005W
 
 DATE
 ----
 2020-03-08 12:00:00 +00:00
 
-Sunrise is at:       06:29:01
-Solar noon is at:    12:11:12
-Sunset is at:        17:53:23
+Solar noon is at:         2020-03-08 12:10:38 +00:00
+The day length is:        11h 24m 24s
 
-The day length is:   11:24:22
+Sunrise is at:            2020-03-08 06:28:26 +00:00
+Sunset is at:             2020-03-08 17:52:50 +00:00
+
+Civil dawn is at:         2020-03-08 05:55:11 +00:00
+Civil dusk is at:         2020-03-08 18:26:05 +00:00
+
+Nautical dawn is at:      2020-03-08 05:16:32 +00:00
+Nautical dusk is at:      2020-03-08 19:04:44 +00:00
+
+Astronomical dawn is at:  2020-03-08 04:37:08 +00:00
+Astronomical dusk is at:  2020-03-08 19:44:08 +00:00
 ```
 Observe that the location is set according to the contents of the configuration file.
 
@@ -97,16 +115,25 @@ Arguments passed in via the command line will override those set in the configur
 $ heliocron -d 2020-03-08 -l 51.4839N -o 0.6044W report
 LOCATION
 --------
-Latitude:  51.4839N
+Latitude: 51.4839N
 Longitude: 0.6044W
 
 DATE
 ----
 2020-03-08 12:00:00 +00:00
 
-Sunrise is at:       06:30:51
-Solar noon is at:    12:13:03
-Sunset is at:        17:55:15
+Solar noon is at:         2020-03-08 12:13:03 +00:00
+The day length is:        11h 24m 24s
 
-The day length is:   11:24:24
+Sunrise is at:            2020-03-08 06:30:51 +00:00
+Sunset is at:             2020-03-08 17:55:15 +00:00
+
+Civil dawn is at:         2020-03-08 05:57:36 +00:00
+Civil dusk is at:         2020-03-08 18:28:30 +00:00
+
+Nautical dawn is at:      2020-03-08 05:18:56 +00:00
+Nautical dusk is at:      2020-03-08 19:07:10 +00:00
+
+Astronomical dawn is at:  2020-03-08 04:39:32 +00:00
+Astronomical dusk is at:  2020-03-08 19:46:34 +00:00
 ```
