@@ -18,9 +18,10 @@ impl<Tz: TimeZone> DateTimeExt for DateTime<Tz> {
         let utc_datetime = self.naive_utc();
 
         // adjust for the epoch starting at 12:00 UTC
-        let hour_part = match utc_datetime.hour() >= 12 {
-            true => (utc_datetime.hour() - 12) as f64 / 24.0,
-            false => (utc_datetime.hour() as f64 / 24.0) - 0.5,
+        let hour_part = if utc_datetime.hour() >= 12 {
+            (utc_datetime.hour() - 12) as f64 / 24.0
+        } else {
+            (utc_datetime.hour() as f64 / 24.0) - 0.5
         };
 
         let time_part = hour_part

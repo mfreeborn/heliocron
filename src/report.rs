@@ -5,18 +5,36 @@ use std::fmt;
 
 use chrono::{DateTime, Duration, FixedOffset, Local, NaiveTime, Offset, TimeZone, Timelike};
 
-use super::{structs, structs::Coordinate};
+use super::{
+    enums, structs,
+    structs::{Coordinate, EventTime},
+};
 use traits::DateTimeExt;
 
 #[derive(Debug)]
 pub struct SolarReport {
-    pub solar_noon: DateTime<FixedOffset>,
-    pub sunrise: DateTime<FixedOffset>,
-    pub sunset: DateTime<FixedOffset>,
-    pub day_length: NaiveTime,
-
+    // required parameters
     pub date: DateTime<FixedOffset>,
     pub coordinates: structs::Coordinates,
+
+    // these attributes are always calculable
+    pub solar_noon: DateTime<FixedOffset>,
+    pub day_length: Duration,
+
+    // these attributes are sometimes not valid i.e. at high latitudes or
+    // mid-summer when there may never be a particular dawn or dusk on a
+    // given day
+    pub sunrise: EventTime,
+    pub sunset: EventTime,
+
+    pub civil_dawn: EventTime,
+    pub civil_dusk: EventTime,
+
+    pub nautical_dawn: EventTime,
+    pub nautical_dusk: EventTime,
+
+    pub astronomical_dawn: EventTime,
+    pub astronomical_dusk: EventTime,
 }
 
 impl Default for SolarReport {
@@ -24,11 +42,17 @@ impl Default for SolarReport {
         let local_time = Local::now();
         let default_datetime =
             local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
-        let default_day_length = NaiveTime::from_hms(0, 0, 0);
+        let default_day_length = Duration::seconds(0);
         SolarReport {
             solar_noon: default_datetime,
-            sunrise: default_datetime,
-            sunset: default_datetime,
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
             day_length: default_day_length,
             date: local_time.with_timezone(&FixedOffset::from_offset(local_time.offset())),
             coordinates: structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap(),
@@ -67,30 +91,55 @@ impl SolarReport {
         DATE\n\
         ----\n\
         {}\n\n\
-        Sunrise is at:       {}\n\
-        Solar noon is at:    {}\n\
-        Sunset is at:        {}\n\n\
-        The day length is:   {}",
+        Solar noon is at:         {}\n\
+        The day length is:        {}\n\n\
+        Sunrise is at:            {}\n\
+        Sunset is at:             {}\n\n\
+        Civil dawn is at:         {}\n\
+        Civil dusk is at:         {}\n\n\
+        Nautical dawn is at:      {}\n\
+        Nautical dusk is at:      {}\n\n\
+        Astronomical dawn is at:  {}\n\
+        Astronomical dusk is at:  {}
+        ",
             self.coordinates.latitude,
             self.coordinates.longitude,
             self.date,
-            self.sunrise,
             self.solar_noon,
+            self.day_length_hms(),
+            self.sunrise,
             self.sunset,
-            self.day_length,
+            self.civil_dawn,
+            self.civil_dusk,
+            self.nautical_dawn,
+            self.nautical_dusk,
+            self.astronomical_dawn,
+            self.astronomical_dusk
         )
     }
 
-    fn calculate_day_length(&self) -> NaiveTime {
-        NaiveTime::from_num_seconds_from_midnight(
-            (self.sunset - self.sunrise).num_seconds() as u32,
-            0,
-        )
+    fn calculate_day_length(&self) -> Duration {
+        if self.sunrise.is_some() & self.sunset.is_some() {
+            self.sunset.datetime.unwrap() - self.sunrise.datetime.unwrap()
+        } else {
+            // 24 hours if sunrise and sunset don't occur
+            Duration::hours(24)
+        }
+    }
+
+    fn day_length_hms(&self) -> String {
+        let day_length = self.day_length.num_seconds();
+        let hours = (day_length / 60) / 60;
+        let minutes = (day_length / 60) % 60;
+        let seconds = day_length % 60;
+
+        format!("{}h {}m {}s", hours, minutes, seconds)
     }
 
     fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
         let mut date = self.date;
 
+        // correct the date if the event rolls over to the next day, or happens on the previous day
         if day_fraction < 0.0 {
             date = date - Duration::days(1);
             day_fraction = day_fraction.abs();
@@ -115,6 +164,47 @@ impl SolarReport {
             .unwrap()
             .with_second(time.second())
             .unwrap()
+    }
+
+    fn calculate_hour_angle(
+        &self,
+        event: Option<enums::TwilightType>,
+        solar_declination: f64,
+    ) -> f64 {
+        let event_angle: f64 = match event {
+            None => 90.833,
+            Some(enums::TwilightType::Civil) => 96.0,
+            Some(enums::TwilightType::Nautical) => 102.0,
+            Some(enums::TwilightType::Astronomical) => 108.0,
+        };
+
+        (((event_angle.to_radians().cos()
+            / (self.coordinates.latitude.to_radians().cos()
+                * solar_declination.to_radians().cos()))
+            - self.coordinates.latitude.to_radians().tan() * solar_declination.to_radians().tan())
+        .acos())
+        .to_degrees()
+    }
+
+    fn calculate_event_start_and_end(
+        &self,
+        twilight_type: Option<enums::TwilightType>,
+        solar_noon: f64,
+        solar_declination: f64,
+    ) -> (EventTime, EventTime) {
+        let hour_angle = self.calculate_hour_angle(twilight_type, solar_declination);
+
+        if hour_angle.is_nan() {
+            return (None.into(), None.into());
+        }
+
+        let start_fraction = solar_noon - (hour_angle * 4.0) / 1440.0;
+        let end_fraction = solar_noon + (hour_angle * 4.0) / 1440.0;
+
+        let start_time = self.day_fraction_to_datetime(start_fraction);
+        let end_time = self.day_fraction_to_datetime(end_fraction);
+
+        (Some(start_time).into(), Some(end_time).into())
     }
 
     fn run(&mut self) {
@@ -178,23 +268,50 @@ impl SolarReport {
                     * (solar_mean_anomaly.to_radians() * 2.0).sin())
             .to_degrees();
 
-        let hour_angle = (((90.833f64.to_radians().cos()
-            / (self.coordinates.latitude.to_radians().cos()
-                * solar_declination.to_radians().cos()))
-            - self.coordinates.latitude.to_radians().tan() * solar_declination.to_radians().tan())
-        .acos())
-        .to_degrees();
-
         let solar_noon = (720.0 - 4.0 * self.coordinates.longitude.value - equation_of_time
             + time_zone * 60.0)
             / 1440.0;
 
-        let sunrise_fraction = solar_noon - (hour_angle * 4.0) / 1440.0;
-        let sunset_fraction = solar_noon + (hour_angle * 4.0) / 1440.0;
+        // plain sunrise/sunset
+        let (sunrise, sunset) =
+            self.calculate_event_start_and_end(None, solar_noon, solar_declination);
 
-        self.sunrise = self.day_fraction_to_datetime(sunrise_fraction);
-        self.sunset = self.day_fraction_to_datetime(sunset_fraction);
+        // civil twilight
+        let (civil_twilight_start, civil_twilight_end) = self.calculate_event_start_and_end(
+            Some(enums::TwilightType::Civil),
+            solar_noon,
+            solar_declination,
+        );
+
+        // nautical twilight
+        let (nautical_twilight_start, nautical_twilight_end) = self.calculate_event_start_and_end(
+            Some(enums::TwilightType::Nautical),
+            solar_noon,
+            solar_declination,
+        );
+
+        // astronomical twilight
+        let (astronomical_twilight_start, astronomical_twilight_end) = self
+            .calculate_event_start_and_end(
+                Some(enums::TwilightType::Astronomical),
+                solar_noon,
+                solar_declination,
+            );
+
         self.solar_noon = self.day_fraction_to_datetime(solar_noon);
+
+        self.sunrise = sunrise;
+        self.sunset = sunset;
+
+        self.civil_dawn = civil_twilight_start;
+        self.civil_dusk = civil_twilight_end;
+
+        self.nautical_dawn = nautical_twilight_start;
+        self.nautical_dusk = nautical_twilight_end;
+
+        self.astronomical_dawn = astronomical_twilight_start;
+        self.astronomical_dusk = astronomical_twilight_end;
+
         self.day_length = self.calculate_day_length();
     }
 }
@@ -205,18 +322,19 @@ mod tests {
 
     #[test]
     fn test_solar_report_new() {
+        // check that a 'new' method is defined and takes a coordinate and a date as parameters
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates {
             latitude: structs::Latitude { value: 0.0 },
             longitude: structs::Longitude { value: 0.0 },
         };
-        // Default trait should handle the rest
+        // Default trait should handle the rest of the parameters
         let _new_report = SolarReport::new(date, coordinates);
     }
 
     #[test]
     fn test_report_content() {
-        // checks that the report contains all the corrent metrics
+        // check that the report contains all the correct metrics
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates {
             latitude: structs::Latitude { value: 0.0 },
@@ -241,13 +359,14 @@ mod tests {
         let sunset_str = format!("{}", report.sunset);
         assert!(report_str.contains(&sunset_str));
 
-        let day_length_str = format!("{}", report.day_length);
+        let day_length_str = format!("{}", report.day_length_hms());
         assert!(report_str.contains(&day_length_str));
     }
 
     #[test]
     fn test_sunrise_sunset() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
+        // ~Springtime
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates =
             structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
@@ -255,15 +374,69 @@ mod tests {
             date,
             coordinates,
             solar_noon: date,
-            sunrise: date,
-            sunset: date,
-            day_length: NaiveTime::from_hms(0, 0, 0),
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
+            day_length: Duration::seconds(0),
         };
 
         report.run();
-        assert_eq!("06:00:07", report.sunrise.time().to_string());
-        assert_eq!("18:36:59", report.sunset.time().to_string());
+        assert_eq!("06:00:07", report.sunrise.time().unwrap().to_string());
+        assert_eq!("18:36:59", report.sunset.time().unwrap().to_string());
+        assert_eq!("12:18:33", report.solar_noon.time().to_string());
+        assert_eq!("05:22:43", report.civil_dawn.time().unwrap().to_string());
+        assert_eq!("19:14:23", report.civil_dusk.time().unwrap().to_string());
+        assert_eq!("04:37:42", report.nautical_dawn.time().unwrap().to_string());
+        assert_eq!("19:59:24", report.nautical_dusk.time().unwrap().to_string());
+        assert_eq!(
+            "03:49:09",
+            report.astronomical_dawn.time().unwrap().to_string()
+        );
+        assert_eq!(
+            "20:47:57",
+            report.astronomical_dusk.time().unwrap().to_string()
+        );
 
+        // mid-summer (there is no true night; it stays astronomical twilight)
+        let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+01:00").unwrap();
+        let coordinates =
+            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        let mut report = SolarReport {
+            date,
+            coordinates,
+            solar_noon: date,
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
+            day_length: Duration::seconds(0),
+        };
+
+        report.run();
+        assert_eq!("04:26:26", report.sunrise.time().unwrap().to_string());
+        assert_eq!("22:02:52", report.sunset.time().unwrap().to_string());
+        assert_eq!("13:14:39", report.solar_noon.time().to_string());
+        assert_eq!("03:23:57", report.civil_dawn.time().unwrap().to_string());
+        assert_eq!("23:05:20", report.civil_dusk.time().unwrap().to_string());
+        assert_eq!(None, report.nautical_dawn.datetime);
+        assert_eq!("Never".to_string(), format!("{}", report.nautical_dawn));
+        assert_eq!(None, report.nautical_dusk.datetime);
+        assert_eq!("Never".to_string(), format!("{}", report.nautical_dusk));
+        assert_eq!(None, report.astronomical_dawn.datetime);
+        assert_eq!("Never".to_string(), format!("{}", report.astronomical_dawn));
+        assert_eq!(None, report.astronomical_dusk.datetime);
+        assert_eq!("Never".to_string(), format!("{}", report.astronomical_dusk));
+
+        // now try with a non-zero time zone
         let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
         let coordinates =
             structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
@@ -271,29 +444,116 @@ mod tests {
             date,
             coordinates,
             solar_noon: date,
-            sunrise: date,
-            sunset: date,
-            day_length: NaiveTime::from_hms(0, 0, 0),
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
+            day_length: Duration::seconds(0),
         };
 
         report.run();
-        assert_eq!("06:47:03", report.sunrise.time().to_string());
-        assert_eq!("19:47:03", report.sunset.time().to_string());
+        assert_eq!("06:47:03", report.sunrise.time().unwrap().to_string());
+        assert_eq!("19:47:03", report.sunset.time().unwrap().to_string());
+        assert_eq!("13:17:03", report.solar_noon.time().to_string());
+        assert_eq!("06:09:13", report.civil_dawn.time().unwrap().to_string());
+        assert_eq!("20:24:53", report.civil_dusk.time().unwrap().to_string());
+        assert_eq!("05:23:09", report.nautical_dawn.time().unwrap().to_string());
+        assert_eq!("21:10:57", report.nautical_dusk.time().unwrap().to_string());
+        assert_eq!(
+            "04:32:31",
+            report.astronomical_dawn.time().unwrap().to_string()
+        );
+        assert_eq!(
+            "22:01:36",
+            report.astronomical_dusk.time().unwrap().to_string()
+        );
 
+        // at an extreme longitude with a very non-local timezone
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "174.0W").unwrap();
         let mut report = SolarReport {
             date,
             coordinates,
             solar_noon: date,
-            sunrise: date,
-            sunset: date,
-            day_length: NaiveTime::from_hms(0, 0, 0),
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
+            day_length: Duration::seconds(0),
         };
 
         report.run();
-        assert_eq!("2020-03-25 17:23:21 +00:00", report.sunrise.to_string());
-        assert_eq!("2020-03-26 06:00:14 +00:00", report.sunset.to_string());
+        assert_eq!(
+            "2020-03-25 17:23:21 +00:00",
+            report.sunrise.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-26 06:00:14 +00:00",
+            report.sunset.datetime.unwrap().to_string()
+        );
+        assert_eq!("2020-03-25 23:41:48 +00:00", report.solar_noon.to_string());
+        assert_eq!(
+            "2020-03-25 16:45:58 +00:00",
+            report.civil_dawn.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-26 06:37:37 +00:00",
+            report.civil_dusk.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-25 16:00:57 +00:00",
+            report.nautical_dawn.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-26 07:22:39 +00:00",
+            report.nautical_dusk.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-25 15:12:24 +00:00",
+            report.astronomical_dawn.datetime.unwrap().to_string()
+        );
+        assert_eq!(
+            "2020-03-26 08:11:12 +00:00",
+            report.astronomical_dusk.datetime.unwrap().to_string()
+        );
+
+        // an extreme northern latitude during the summer
+        let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+02:00").unwrap();
+        let coordinates = structs::Coordinates::from_decimal_degrees("78.22N", "15.635E").unwrap();
+        let mut report = SolarReport {
+            date,
+            coordinates,
+            solar_noon: date,
+            sunrise: EventTime::from(None),
+            sunset: EventTime::from(None),
+            civil_dawn: EventTime::from(None),
+            civil_dusk: EventTime::from(None),
+            nautical_dawn: EventTime::from(None),
+            nautical_dusk: EventTime::from(None),
+            astronomical_dawn: EventTime::from(None),
+            astronomical_dusk: EventTime::from(None),
+            day_length: Duration::seconds(0),
+        };
+
+        report.run();
+        assert_eq!(None, report.sunrise.datetime);
+        assert_eq!(None, report.sunset.datetime);
+        assert_eq!("12:59:21", report.solar_noon.time().to_string());
+        assert_eq!(None, report.civil_dawn.datetime);
+        assert_eq!(None, report.civil_dusk.datetime);
+        assert_eq!(None, report.nautical_dawn.datetime);
+        assert_eq!(None, report.nautical_dusk.datetime);
+        assert_eq!(None, report.astronomical_dawn.datetime);
+        assert_eq!(None, report.astronomical_dusk.datetime);
+        assert_eq!("24h 0m 0s", report.day_length_hms());
     }
 
     #[test]

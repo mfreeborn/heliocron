@@ -1,10 +1,56 @@
 use std::{fmt, result};
 
+use chrono::{DateTime, FixedOffset, NaiveTime};
 use serde::Deserialize;
 
 use super::errors::{ConfigErrorKind, HeliocronError};
 
 type Result<T> = result::Result<T, HeliocronError>;
+
+#[derive(Debug)]
+pub struct EventTime {
+    pub datetime: Option<DateTime<FixedOffset>>,
+}
+
+impl EventTime {
+    pub fn new(datetime: Option<DateTime<FixedOffset>>) -> EventTime {
+        EventTime { datetime }
+    }
+
+    pub fn is_some(&self) -> bool {
+        if self.datetime.is_some() {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn time(&self) -> Option<NaiveTime> {
+        match self.datetime {
+            Some(datetime) => Some(datetime.time()),
+            None => None,
+        }
+    }
+}
+
+impl fmt::Display for EventTime {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self.datetime {
+                Some(datetime) => datetime.to_string(),
+                None => "Never".to_string(),
+            }
+        )
+    }
+}
+
+impl From<Option<DateTime<FixedOffset>>> for EventTime {
+    fn from(datetime: Option<DateTime<FixedOffset>>) -> EventTime {
+        EventTime::new(datetime)
+    }
+}
 
 fn invalid_coordinates_error(msg: &'static str) -> HeliocronError {
     HeliocronError::Config(ConfigErrorKind::InvalidCoordindates(msg))
@@ -28,9 +74,10 @@ pub struct Longitude {
 
 impl fmt::Display for Latitude {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let compass_direction = match self.value.is_sign_positive() {
-            true => "N",
-            false => "S",
+        let compass_direction = if self.value.is_sign_positive() {
+            "N"
+        } else {
+            "S"
         };
         write!(f, "Latitude: {:.4}{}", self.value.abs(), compass_direction)
     }
@@ -38,9 +85,10 @@ impl fmt::Display for Latitude {
 
 impl fmt::Display for Longitude {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let compass_direction = match self.value.is_sign_positive() {
-            true => "E",
-            false => "W",
+        let compass_direction = if self.value.is_sign_positive() {
+            "E"
+        } else {
+            "W"
         };
         write!(f, "Longitude: {:.4}{}", self.value.abs(), compass_direction)
     }
@@ -75,11 +123,11 @@ impl Coordinate for Latitude {
             .chars()
             .last()
             .ok_or(HeliocronError::Config(
-                ConfigErrorKind::InvalidCoordindates("No coordinates found."),
+                ConfigErrorKind::InvalidCoordindates("No coordinates found"),
             ))? {
             c if c == 'n' || c == 's' => Ok(c),
             _ => Err(invalid_coordinates_error(
-                "Latitude must end with 'N' or 'S'.",
+                "Latitude must end with 'N' or 'S'",
             )),
         }
     }
@@ -87,13 +135,13 @@ impl Coordinate for Latitude {
     fn parse_decimal_degrees(latitude: &str) -> Result<f64> {
         latitude[..latitude.len() - 1]
             .parse()
-            .map_err(|_| invalid_coordinates_error("Latitude must be a positive value followed by a compass direction ('N' or 'S')."))
+            .map_err(|_| invalid_coordinates_error("Latitude must be a positive value followed by a compass direction ('N' or 'S')"))
             .and_then(|n: f64| match n {
                 n if n.is_sign_positive() => match n {
                     n if (0.0..=90.0).contains(&n) => Ok(n),
                     _ => Err(invalid_coordinates_error("Latitude must be a positive value between 0.0 and 90.0")),
                 },
-                _ => Err(invalid_coordinates_error("Latitude must be a positive value between 0.0 and 90.0.")),
+                _ => Err(invalid_coordinates_error("Latitude must be a positive value between 0.0 and 90.0")),
             })
     }
 
@@ -102,7 +150,7 @@ impl Coordinate for Latitude {
             'n' => Ok(1.0),
             's' => Ok(-1.0),
             _ => Err(invalid_coordinates_error(
-                "Latitude must be a positive value followed by a compass direction ('N' or 'S').",
+                "Latitude must be a positive value followed by a compass direction ('N' or 'S')",
             )),
         }
     }
@@ -131,7 +179,7 @@ impl Coordinate for Longitude {
             .chars()
             .last()
             .ok_or(HeliocronError::Config(
-                ConfigErrorKind::InvalidCoordindates("No coordinates found."),
+                ConfigErrorKind::InvalidCoordindates("No coordinates found"),
             ))? {
             c if c == 'w' || c == 'e' => Ok(c),
             _ => Err(invalid_coordinates_error(
@@ -143,13 +191,13 @@ impl Coordinate for Longitude {
     fn parse_decimal_degrees(longitude: &str) -> Result<f64> {
         longitude[..longitude.len() - 1]
             .parse()
-            .map_err(|_| invalid_coordinates_error("Longitude must be a positive value followed by a compass direction ('W' or 'E')."))
+            .map_err(|_| invalid_coordinates_error("Longitude must be a positive value followed by a compass direction ('W' or 'E')"))
             .and_then(|n: f64| match n {
                 n if n.is_sign_positive() => match n {
                     n if (0.0..=180.0).contains(&n) => Ok(n),
                     _ => Err(invalid_coordinates_error("Longitude must be a positive value between 0.0 and 180.0")),
                 },
-                _ => Err(invalid_coordinates_error("Longitude must be a positive value between 0.0 and 180.0.")),
+                _ => Err(invalid_coordinates_error("Longitude must be a positive value between 0.0 and 180.0")),
             })
     }
 
@@ -158,7 +206,7 @@ impl Coordinate for Longitude {
             'e' => Ok(1.0),
             'w' => Ok(-1.0),
             _ => Err(invalid_coordinates_error(
-                "Longitude must be a positive value followed by a compass direction ('W' or 'E').",
+                "Longitude must be a positive value followed by a compass direction ('W' or 'E')",
             )),
         }
     }

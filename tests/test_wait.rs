@@ -6,6 +6,25 @@ use assert_cmd::prelude::*;
 // override the default sleep function
 
 #[test]
+fn test_wait_panics_with_event_non_occurrence() {
+    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+
+    let wait = cmd
+        .args(&[
+            "-d",
+            "2099-06-21",
+            "-t",
+            "+00:00",
+            "wait",
+            "--event",
+            "astronomical_dusk",
+        ])
+        .assert();
+
+    wait.failure();
+}
+
+#[test]
 fn test_wait_no_offset() {
     // assert that the heliocron will put the thread to sleep
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
