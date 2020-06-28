@@ -1,4 +1,10 @@
+use std::result;
+
 use chrono::{DateTime, Duration, FixedOffset};
+
+use super::errors::{HeliocronError, RuntimeErrorKind};
+
+type Result<T> = result::Result<T, HeliocronError>;
 
 fn sleep(dur: std::time::Duration) {
     if cfg!(feature = "integration-test") || cfg!(test) {
@@ -8,11 +14,11 @@ fn sleep(dur: std::time::Duration) {
     };
 }
 
-pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) {
+pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) -> Result<()> {
     let duration_to_wait = match duration.to_std() {
-        Ok(dur) => dur,
-        Err(_) => panic!("This event has already passed! Must pick a time in the future."),
-    };
+        Ok(dur) => Ok(dur),
+        Err(_) => Err(HeliocronError::Runtime(RuntimeErrorKind::PastEvent)),
+    }?;
 
     println!(
         "Thread going to sleep for {} seconds until {}. Press ctrl+C to cancel.",
@@ -20,6 +26,7 @@ pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) {
         wait_until
     );
     sleep(duration_to_wait);
+    Ok(())
 }
 
 #[cfg(test)]
@@ -30,6 +37,6 @@ mod tests {
     fn test_wait() {
         let duration_to_wait = Duration::seconds(5);
         let wait_until = FixedOffset::west(0).timestamp(9999999999, 0);
-        wait(duration_to_wait, wait_until);
+        wait(duration_to_wait, wait_until).unwrap();
     }
 }

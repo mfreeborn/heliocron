@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, result};
 
 use chrono::{DateTime, Duration, FixedOffset, Local, TimeZone};
 use dirs;
@@ -11,11 +11,17 @@ use super::{
     parsers, structs,
 };
 
-type Result<T> = std::result::Result<T, HeliocronError>;
+type Result<T> = result::Result<T, HeliocronError>;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    about = "A simple utility for finding out what time sunrise/sunset is, and executing programs relative to these events."
+    about = "A simple utility for finding out what time various solar events occur, such as sunrise and \
+             sunset, at a given location on a given date. It can be integrated into cron commands to \
+             trigger program execution relative to these events.\n\n\
+             For example, to execute a script 'turn-on-lights.sh' at sunrise, make a Crontab entry to trigger \
+             at a time that will always be before the chosen event (say, 2am) and use heliocron to calculate \
+             and perform the appropriate delay:\n\n\
+             \t0 2 * * * heliocron --latitude 51.47N --longitude 3.1W wait --event sunrise && turn-on-lights.sh"
 )]
 struct Cli {
     #[structopt(subcommand)]
@@ -24,10 +30,12 @@ struct Cli {
     #[structopt(flatten)]
     date_args: DateArgs,
 
+    // the default values for latitude and longitude are handled differently to enable the user to set the values
+    // either on the command line, in a config file or have a default provided by the program
     #[structopt(
         short = "l",
         long = "latitude",
-        help = "Set the latitude in decimal degrees. The default is \"51.4769N\" unless overridden in ~/.config/heliocron.toml",
+        help = "Set the latitude in decimal degrees. Can also be set in ~/.config/heliocron.toml. [default: 51.4769N]",
         requires = "longitude"
     )]
     latitude: Option<String>,
@@ -35,7 +43,7 @@ struct Cli {
     #[structopt(
         short = "o",
         long = "longitude",
-        help = "Set the longitude in decimal degrees. The default is \"0.0005W\" unless overridden in ~/.config/heliocron.toml",
+        help = "Set the longitude in decimal degrees. Can also be set in ~/.config/heliocron.toml. [default: 0.0005W]",
         requires = "latitude"
     )]
     longitude: Option<String>,
@@ -93,7 +101,7 @@ impl TomlConfig {
         }
     }
 
-    fn from_toml(config: std::result::Result<TomlConfig, toml::de::Error>) -> TomlConfig {
+    fn from_toml(config: result::Result<TomlConfig, toml::de::Error>) -> TomlConfig {
         match config {
             Ok(conf) => conf,
             _ => TomlConfig::new(),
