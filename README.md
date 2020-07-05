@@ -252,13 +252,13 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     | Event | Description |
     | ----- | ----------- |
     | `sunrise` | The moment when the upper edge of the solar disk becomes visible above the horizon |
-    | `sunset` | The moment when the upper edge of the geometric centre of the Sun disappears below the horizon |
-    | `civil_dawn` | The moment when the centre of the geometric centre of the Sun reaches 6° below the horizon as it is rising |
-    | `civil_dusk` | The moment when the centre of the geometric centre of the Sun reaches 6° below the horizon as it is setting |
-    | `nautical_dawn` | The moment when the centre of the geometric centre of the Sun reaches 12° below the horizon as it is rising |
-    | `nautical_dusk` | The moment when the centre of the geometric centre of the Sun reaches 12° below the horizon as it is settting |
-    | `astronomical_dawn` | The moment when the centre of the geometric centre of the Sun reaches 18° below the horizon as it is rising |
-    | `astronomical_dusk` | The moment when the centre of the geometric centre of the Sun reaches 18° below the horizon as it is setting |
+    | `sunset` | The moment when the upper edge of the solar disk disappears below the horizon |
+    | `civil_dawn` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is rising |
+    | `civil_dusk` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is setting |
+    | `nautical_dawn` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is rising |
+    | `nautical_dusk` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is settting |
+    | `astronomical_dawn` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is rising |
+    | `astronomical_dusk` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is setting |
 
   * `-o, --offset` [default: 00:00:00]
 
