@@ -96,7 +96,7 @@ Astronomical dusk is at:  Never
 Heliocron supports reading some configuration options from a file located at ~/.config/helicron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise Heliocron will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
 
 ```toml
-~/.config/heliocron.toml
+# ~/.config/heliocron.toml
 # set the default location to Buckingham Palace
 latitude = "51.5014N"
 longitude = "0.1419W"
