@@ -38,6 +38,7 @@ impl Event {
 #[derive(Debug)]
 pub enum TwilightType {
     Civil,
+    Jewish,
     Nautical,
     Astronomical,
 }
