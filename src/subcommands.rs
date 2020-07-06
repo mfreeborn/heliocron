@@ -20,6 +20,8 @@ pub fn wait(offset: Duration, report: report::SolarReport, event: enums::Event) 
         enums::Event::Sunset => report.sunset,
         enums::Event::CivilDawn => report.civil_dawn,
         enums::Event::CivilDusk => report.civil_dusk,
+        enums::Event::JewishDawn => report.jewish_dawn,
+        enums::Event::JewishDusk => report.jewish_dusk,
         enums::Event::NauticalDawn => report.nautical_dawn,
         enums::Event::NauticalDusk => report.nautical_dusk,
         enums::Event::AstronomicalDawn => report.astronomical_dawn,

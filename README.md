@@ -255,6 +255,8 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     | `sunset` | The moment when the upper edge of the solar disk disappears below the horizon |
     | `civil_dawn` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is rising |
     | `civil_dusk` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is setting |
+    | `jewish_dawn` | The moment when the geometric centre of the Sun reaches 8.5° below the horizon as it is rising (does not show in reports) |
+    | `jewish_dusk` | The moment when the geometric centre of the Sun reaches 8.5° below the horizon as it is settting (does not show in reports) |
     | `nautical_dawn` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is rising |
     | `nautical_dusk` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is settting |
     | `astronomical_dawn` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is rising |

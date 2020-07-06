@@ -30,6 +30,9 @@ pub struct SolarReport {
     pub civil_dawn: EventTime,
     pub civil_dusk: EventTime,
 
+    pub jewish_dawn: EventTime,
+    pub jewish_dusk: EventTime,
+
     pub nautical_dawn: EventTime,
     pub nautical_dusk: EventTime,
 
@@ -49,6 +52,8 @@ impl Default for SolarReport {
             sunset: EventTime::from(None),
             civil_dawn: EventTime::from(None),
             civil_dusk: EventTime::from(None),
+            jewish_dawn: EventTime::from(None),
+            jewish_dusk: EventTime::from(None),
             nautical_dawn: EventTime::from(None),
             nautical_dusk: EventTime::from(None),
             astronomical_dawn: EventTime::from(None),
@@ -174,6 +179,7 @@ impl SolarReport {
         let event_angle: f64 = match event {
             None => 90.833,
             Some(enums::TwilightType::Civil) => 96.0,
+            Some(enums::TwilightType::Jewish) => 98.5,
             Some(enums::TwilightType::Nautical) => 102.0,
             Some(enums::TwilightType::Astronomical) => 108.0,
         };
@@ -283,6 +289,13 @@ impl SolarReport {
             solar_declination,
         );
 
+        // jewish twilight
+        let (jewish_twilight_start, jewish_twilight_end) = self.calculate_event_start_and_end(
+            Some(enums::TwilightType::Jewish),
+            solar_noon,
+            solar_declination,
+        );
+
         // nautical twilight
         let (nautical_twilight_start, nautical_twilight_end) = self.calculate_event_start_and_end(
             Some(enums::TwilightType::Nautical),
@@ -305,6 +318,9 @@ impl SolarReport {
 
         self.civil_dawn = civil_twilight_start;
         self.civil_dusk = civil_twilight_end;
+
+        self.jewish_dawn = jewish_twilight_start;
+        self.jewish_dusk = jewish_twilight_end;
 
         self.nautical_dawn = nautical_twilight_start;
         self.nautical_dusk = nautical_twilight_end;

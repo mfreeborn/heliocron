@@ -65,11 +65,11 @@ pub enum Subcommand {
         offset: Result<Duration>,
 
         #[structopt(
-            help = "Choose an event from which to base your delay.", 
-            short = "e", 
-            long = "event", 
+            help = "Choose an event from which to base your delay.",
+            short = "e",
+            long = "event",
             parse(from_str=parsers::parse_event),
-            possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk"]
+            possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "jewish_dawn", "jewish_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk"]
         )]
         event: Result<enums::Event>,
     },
