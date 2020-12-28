@@ -47,12 +47,6 @@ struct Cli {
         requires = "latitude"
     )]
     longitude: Option<String>,
-
-    #[structopt(
-        long = "tag",
-        help = "Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program."
-    )]
-    tag: Option<String>,
 }
 
 #[derive(Debug, StructOpt, Clone)]
@@ -86,6 +80,12 @@ pub enum Subcommand {
             required_ifs = &[("event-name", "custom_am"), ("event-name", "custom_pm")],
         )]
         custom_altitude: Option<String>, // we'll validate it to a float later
+
+        #[structopt(
+            long = "tag",
+            help = "Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program."
+        )]
+        tag: Option<String>,
     },
 }
 
@@ -171,6 +171,7 @@ impl Config {
                 offset,
                 custom_altitude,
                 event_name,
+                ..
             } => {
                 // do some gymnastics here. Structopt already validates that altitude is provided
                 let altitude = custom_altitude

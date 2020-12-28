@@ -338,8 +338,6 @@ fn test_tag_is_allowed() {
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
     let wait_short = cmd
         .args(&[
-            "--tag",
-            "description of this process",
             "-d",
             "2091-10-05",
             "-t",
@@ -349,6 +347,8 @@ fn test_tag_is_allowed() {
             "sunrise",
             "-o",
             "-12:30:52",
+            "--tag",
+            "description of this process",
         ])
         .assert();
 
