@@ -2,17 +2,19 @@ use std::error;
 
 use chrono;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum HeliocronError {
     Config(ConfigErrorKind),
     Runtime(RuntimeErrorKind),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ConfigErrorKind {
     InvalidCoordindates(&'static str),
     InvalidTomlFile,
     ParseDate,
+    ParseAltitude,
+    ParseOffset,
     InvalidEvent,
 }
 
@@ -26,12 +28,18 @@ impl ConfigErrorKind {
             ConfigErrorKind::ParseDate => {
                 "Error parsing date. Ensure the date and timezone formats are correct."
             }
+            ConfigErrorKind::ParseAltitude => {
+                "Error parsing altitude. Must be a number which is <= 90.0 and >= -90.0."
+            }
+            ConfigErrorKind::ParseOffset => {
+                "Error parsing offset. Expected a string in the format HH:MM:SS or HH:MM."
+            }
             ConfigErrorKind::InvalidEvent => "Error parsing event.",
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RuntimeErrorKind {
     NonOccurringEvent,
     PastEvent,
@@ -59,6 +67,8 @@ impl std::fmt::Display for HeliocronError {
                         format!("Invalid coordinates - {}", msg),
                     ConfigErrorKind::InvalidTomlFile => err.as_str().to_string(),
                     ConfigErrorKind::ParseDate => err.as_str().to_string(),
+                    ConfigErrorKind::ParseAltitude => err.as_str().to_string(),
+                    ConfigErrorKind::ParseOffset => err.as_str().to_string(),
                     ConfigErrorKind::InvalidEvent => err.as_str().to_string(),
                 }
             ),

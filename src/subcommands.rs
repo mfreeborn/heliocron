@@ -2,42 +2,52 @@ use std::result;
 
 use chrono::{Duration, FixedOffset, Local, TimeZone};
 
-use super::{
-    enums,
-    errors::{HeliocronError, RuntimeErrorKind},
-    report, utils,
-};
+use super::{calc, enums, errors, report, utils};
 
-type Result<T> = result::Result<T, HeliocronError>;
+type Result<T> = result::Result<T, errors::HeliocronError>;
 
-pub fn display_report(report: report::SolarReport) {
+pub fn display_report(solar_calculations: calc::SolarCalculations) -> Result<()> {
+    let report = report::SolarReport::new(solar_calculations);
     println!("{}", report);
+    Ok(())
 }
 
-pub fn wait(offset: Duration, report: report::SolarReport, event: enums::Event) -> Result<()> {
+pub fn wait(
+    event: enums::Event,
+    offset: Duration,
+    solar_calculations: calc::SolarCalculations,
+) -> Result<()> {
     let event_time = match event {
-        enums::Event::Sunrise => report.sunrise,
-        enums::Event::Sunset => report.sunset,
-        enums::Event::CivilDawn => report.civil_dawn,
-        enums::Event::CivilDusk => report.civil_dusk,
-        enums::Event::NauticalDawn => report.nautical_dawn,
-        enums::Event::NauticalDusk => report.nautical_dusk,
-        enums::Event::AstronomicalDawn => report.astronomical_dawn,
-        enums::Event::AstronomicalDusk => report.astronomical_dusk,
+        enums::Event::SolarNoon => solar_calculations.get_solar_noon(),
+        enums::Event::Sunrise { .. }
+        | enums::Event::Sunset { .. }
+        | enums::Event::CivilDawn { .. }
+        | enums::Event::CivilDusk { .. }
+        | enums::Event::NauticalDawn { .. }
+        | enums::Event::NauticalDusk { .. }
+        | enums::Event::AstronomicalDawn { .. }
+        | enums::Event::AstronomicalDusk { .. }
+        | enums::Event::CustomAM { .. }
+        | enums::Event::CustomPM { .. } => solar_calculations.calculate_event_time(event),
     };
 
-    // handle the case when the chosen event doesn't occur on this day
-    if event_time.to_string() == "Never" {
-        Err(HeliocronError::Runtime(RuntimeErrorKind::NonOccurringEvent))?;
-    }
+    match event_time.datetime {
+        Some(datetime) => {
+            let wait_until = datetime + offset;
 
-    let wait_until = event_time.datetime.unwrap() + offset;
+            let local_time = Local::now();
+            let local_time =
+                local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
 
-    let local_time = Local::now();
-    let local_time = local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
+            let duration_to_wait = wait_until - local_time;
 
-    let duration_to_wait = wait_until - local_time;
-
-    utils::wait(duration_to_wait, wait_until)?;
+            utils::wait(duration_to_wait, wait_until)?;
+        }
+        None => {
+            Err(errors::HeliocronError::Runtime(
+                errors::RuntimeErrorKind::NonOccurringEvent,
+            ))?;
+        }
+    };
     Ok(())
 }
