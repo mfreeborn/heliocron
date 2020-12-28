@@ -13,7 +13,7 @@ use super::{
 
 type Result<T> = result::Result<T, HeliocronError>;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, StructOpt, Clone)]
 #[structopt(
     about = "A simple utility for finding out what time various solar events occur, such as sunrise and \
              sunset, at a given location on a given date. It can be integrated into cron commands to \
@@ -49,7 +49,7 @@ struct Cli {
     longitude: Option<String>,
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, StructOpt, Clone)]
 pub enum Subcommand {
     Report {},
 
@@ -68,14 +68,22 @@ pub enum Subcommand {
             help = "Choose an event from which to base your delay.", 
             short = "e", 
             long = "event", 
-            parse(from_str=parsers::parse_event),
-            possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk"]
+            possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk", "custom_am", "custom_pm", "solar_noon"]
         )]
-        event: Result<enums::Event>,
+        event_name: String,
+
+        #[structopt(
+            help = "Set the elevation of the centre of the Sun relative to the horizon. Positive values mean that the centre of the Sun is below the horizon, whilst negative values mean that the centre of the sun is above the horizon. This argument is ignored if not specifying a custom event.",
+            short = "a",
+            long = "altitude",
+            allow_hyphen_values = true,
+            required_ifs = &[("event-name", "custom_am"), ("event-name", "custom_pm")],
+        )]
+        custom_altitude: Option<String>, // we'll validate it to a float later
     },
 }
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, StructOpt, Clone)]
 struct DateArgs {
     #[structopt(short = "d", long = "date")]
     date: Option<String>,
@@ -109,12 +117,22 @@ impl TomlConfig {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum Action {
+    Report,
+    Wait {
+        event: enums::Event,
+        offset: Duration,
+    },
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
+    // this master config struct contains all information parsed from the TOML file and CLI args
+    // required to run any command
     pub coordinates: structs::Coordinates,
     pub date: DateTime<FixedOffset>,
-    pub subcommand: Option<Subcommand>,
-    pub event: Option<enums::Event>,
+    pub action: Action,
 }
 
 impl Config {
@@ -133,6 +151,7 @@ impl Config {
 
         // set the date
         let date_args = cli_args.date_args;
+
         if let Some(date) = date_args.date {
             self.date = parsers::parse_date(
                 &date,
@@ -141,14 +160,30 @@ impl Config {
             )?;
         }
 
-        // set the subcommand to execute
-        self.subcommand = Some(cli_args.subcommand);
+        self.action = match cli_args.subcommand {
+            Subcommand::Wait {
+                offset,
+                custom_altitude,
+                event_name,
+            } => {
+                // do some gymnastics here. Structopt already validates that altitude is provided
+                let altitude = custom_altitude
+                    .map(|a| parsers::parse_altitude(a))
+                    .transpose()?;
+                let event = enums::Event::new(event_name.as_str(), altitude)?;
+                Action::Wait {
+                    offset: offset?,
+                    event,
+                }
+            }
+            Subcommand::Report {} => Action::Report,
+        };
 
         Ok(self)
     }
 }
 
-pub fn get_config() -> Result<Config> {
+pub fn parse_config() -> Result<Config> {
     // master function for collecting all config variables and returning a single runtime configuration
 
     // 0. Set up default config
@@ -157,13 +192,13 @@ pub fn get_config() -> Result<Config> {
         date: Local::today()
             .and_hms(12, 0, 0)
             .with_timezone(&FixedOffset::from_offset(Local::today().offset())),
-        subcommand: None,
-        event: None,
+        // action will always get overwritten by the action provided later on from the CLI args
+        action: Action::Report,
     };
 
     // 1. Overwrite defaults with config from ~/.config/heliocron.toml if present
-
     let config: Config = if cfg!(feature = "integration-test") {
+        // if we are running integration tests, we actually just want to use the default config
         default_config
     } else {
         let path = dirs::config_dir()
@@ -184,7 +219,6 @@ pub fn get_config() -> Result<Config> {
 
         config
     };
-    // if we are running integration tests, we actually just want to use the default config
 
     // 2. Overwrite any currently set config with CLI arguments
     let cli_args = Cli::from_args();

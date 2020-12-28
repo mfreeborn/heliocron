@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, TimeZone, Timelike};
+use chrono::{DateTime, Datelike, NaiveTime, TimeZone, Timelike};
 
 pub trait DateTimeExt {
     fn to_julian_date(&self) -> f64;
@@ -32,6 +32,16 @@ impl<Tz: TimeZone> DateTimeExt for DateTime<Tz> {
     }
 }
 
+pub trait NaiveTimeExt {
+    fn day_fraction(&self) -> f64;
+}
+
+impl NaiveTimeExt for NaiveTime {
+    fn day_fraction(&self) -> f64 {
+        self.num_seconds_from_midnight() as f64 / 86400.0
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,6 +57,20 @@ mod tests {
         for (expected, arg) in params.iter() {
             let date = DateTime::parse_from_rfc3339(*arg).unwrap();
             assert_eq!(*expected, format!("{:.5}", date.to_julian_date()));
+        }
+    }
+
+    #[test]
+    fn test_day_fraction() {
+        let params = [
+            (0.0, NaiveTime::from_hms(0, 0, 0)),
+            (0.5, NaiveTime::from_hms(12, 0, 0)),
+            (0.55, NaiveTime::from_hms(13, 12, 0)),
+            (0.75, NaiveTime::from_hms(18, 0, 0)),
+        ];
+
+        for (expected, time) in params.iter() {
+            assert_eq!(*expected, time.day_fraction())
         }
     }
 }

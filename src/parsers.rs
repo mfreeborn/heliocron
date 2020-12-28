@@ -39,8 +39,8 @@ pub fn parse_date(
     Ok(datetime)
 }
 
-pub fn parse_event(event: &str) -> Result<Event> {
-    Ok(Event::new(event)?)
+pub fn parse_event(event: &str, custom_altitude: Option<f64>) -> Result<Event> {
+    Ok(Event::new(event, custom_altitude)?)
 }
 
 pub fn parse_offset(offset: &str) -> Result<Duration> {
@@ -57,7 +57,7 @@ pub fn parse_offset(offset: &str) -> Result<Duration> {
         offset if NaiveTime::parse_from_str(offset, "%H:%M").is_ok() => {
             Ok(NaiveTime::parse_from_str(offset, "%H:%M")?)
         }
-        _ => Err(HeliocronError::Config(ConfigErrorKind::ParseDate)),
+        _ => Err(HeliocronError::Config(ConfigErrorKind::ParseOffset)),
     }?;
 
     let offset = offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0));
@@ -69,10 +69,66 @@ pub fn parse_offset(offset: &str) -> Result<Duration> {
     }
 }
 
+pub fn parse_altitude(altitude: String) -> Result<f64> {
+    let altitude: f64 = match altitude.parse() {
+        Ok(altitude) => Ok(altitude),
+        Err(_) => Err(HeliocronError::Config(ConfigErrorKind::ParseAltitude)),
+    }?;
+
+    if (altitude >= -90.0) & (altitude <= 90.0) {
+        Ok(altitude)
+    } else {
+        Err(HeliocronError::Config(ConfigErrorKind::ParseAltitude))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use chrono::Timelike;
+
+    #[test]
+    fn test_parse_altitude() {
+        let valid_altitudes = &["90.0", "8", "0", "-1.2", "-90.0"];
+
+        for a in valid_altitudes.iter() {
+            assert!(parse_altitude((*a).to_owned()).is_ok())
+        }
+
+        let invalid_altitudes = &["-90.1", "90.1", "not_an_altitude"];
+
+        for a in invalid_altitudes.iter() {
+            assert!(parse_altitude((*a).to_owned()).is_err())
+        }
+    }
+
+    #[test]
+    fn test_parse_offset() {
+        let valid_offsets = &[
+            ("12:00:00", Duration::hours(12)),
+            ("12:00", Duration::hours(12)),
+            ("-12:00:00", -Duration::hours(12)),
+            ("23:59:59", Duration::seconds(86399)),
+            ("23:59", Duration::seconds(86340)),
+            ("00:59", Duration::minutes(59)),
+            ("00:00", Duration::minutes(0)),
+            ("0:00", Duration::minutes(0)),
+            ("0:0", Duration::minutes(0)),
+        ];
+
+        for (input, expected) in valid_offsets.iter() {
+            let offset = parse_offset(*input).unwrap();
+            assert_eq!(*expected, offset);
+        }
+
+        let invalid_offsets = &["24:00:00"];
+
+        for input in invalid_offsets.iter() {
+            let offset = parse_offset(*input);
+            assert!(offset.is_err());
+        }
+    }
+
     #[test]
     fn test_parse_date() {
         let expected = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
@@ -94,35 +150,65 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_parse_date_wrong_format_fails() {
-        let _result = parse_date("2020-03-25", "%Y-%m-%Y", None).unwrap();
+        let result = parse_date("2020-03-25", "%Y-%m-%Y", None);
+        assert!(result.is_err());
     }
 
     #[test]
-    #[should_panic]
     fn test_parse_date_wrong_tz_fails() {
-        let _result = parse_date("2020-03-25", "%Y-%m-%d", Some("00:00")).unwrap();
+        let result = parse_date("2020-03-25", "%Y-%m-%d", Some("00:00"));
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_event() {
         let params = [
-            (Event::Sunrise, "sunrise"),
-            (Event::Sunrise, "sunRISE"),
-            (Event::Sunrise, "  sunrisE"),
-            (Event::Sunset, "sunset"),
-            (Event::Sunset, "sunSET  "),
+            (
+                Event::Sunrise {
+                    degrees_below_horizon: 0.833,
+                    time_of_day: crate::enums::TimeOfDay::AM,
+                },
+                "sunrise",
+            ),
+            (
+                Event::Sunrise {
+                    degrees_below_horizon: 0.833,
+                    time_of_day: crate::enums::TimeOfDay::AM,
+                },
+                "sunRISE",
+            ),
+            (
+                Event::Sunrise {
+                    degrees_below_horizon: 0.833,
+                    time_of_day: crate::enums::TimeOfDay::AM,
+                },
+                "  sunrisE",
+            ),
+            (
+                Event::Sunset {
+                    degrees_below_horizon: 0.833,
+                    time_of_day: crate::enums::TimeOfDay::PM,
+                },
+                "sunset",
+            ),
+            (
+                Event::Sunset {
+                    degrees_below_horizon: 0.833,
+                    time_of_day: crate::enums::TimeOfDay::PM,
+                },
+                "sunSET  ",
+            ),
         ];
 
         for (expected, arg) in params.iter() {
-            assert_eq!(*expected, parse_event(*arg).unwrap());
+            assert_eq!(*expected, parse_event(*arg, None).unwrap());
         }
     }
 
     #[test]
-    #[should_panic]
     fn test_parse_event_fails() {
-        let _event = parse_event("sun rise").unwrap();
+        let event = parse_event("sun rise", None);
+        assert!(event.is_err());
     }
 }
