@@ -332,3 +332,28 @@ fn test_offset_parse_error() {
     .failure()
     .stderr(predicates::str::contains("in the format HH:MM:SS or HH:MM"));
 }
+
+#[test]
+fn test_tag_is_allowed() {
+    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let wait_short = cmd
+        .args(&[
+            "--tag",
+            "description of this process",
+            "-d",
+            "2091-10-05",
+            "-t",
+            "+00:00",
+            "wait",
+            "-e",
+            "sunrise",
+            "-o",
+            "-12:30:52",
+        ])
+        .assert();
+
+    wait_short
+        .success()
+        .stdout(predicates::str::contains("going to sleep for"))
+        .stdout(predicates::str::contains("2091-10-04 17:37:02 +00:00"));
+}

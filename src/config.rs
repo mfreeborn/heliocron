@@ -47,6 +47,12 @@ struct Cli {
         requires = "latitude"
     )]
     longitude: Option<String>,
+
+    #[structopt(
+        long = "tag",
+        help = "Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program."
+    )]
+    tag: Option<String>,
 }
 
 #[derive(Debug, StructOpt, Clone)]
