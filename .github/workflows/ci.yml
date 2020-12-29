@@ -1,8 +1,11 @@
 name: ci
+
 on:
   pull_request:
     branches:
     - master
+  workflow_dispatch
+
 jobs:
   test:
     name: test
