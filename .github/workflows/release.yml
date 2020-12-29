@@ -7,7 +7,7 @@ on:
 jobs:
   create-crates-io-release:
     name: create-crates-io-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
@@ -22,12 +22,12 @@ jobs:
 
   create-gh-releases-release:
     name: create-gh-releases-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env:
       VERSION:
     steps:
       - name: Get the version
-        run: echo ::set-env name=VERSION::${GITHUB_REF#refs/tags/}
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Create artifacts directory
         run: mkdir artifacts
@@ -56,7 +56,7 @@ jobs:
   build-gh-releases-release:
     name: build-gh-releases-release
     needs: ["create-gh-releases-release"]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     env:
       CARGO: cargo
       # when CARGO is set to CROSS, this is set to `--target matrix.target`
@@ -91,9 +91,9 @@ jobs:
         # FIXME: to work around bugs in latest cross release, install master
         # see: https://github.com/rust-embedded/cross/issues/357
         cargo install --git https://github.com/rust-embedded/cross
-        echo "::set-env name=CARGO::cross"
-        echo "::set-env name=TARGET_FLAGS::--target ${{ matrix.target }}"
-        echo "::set-env name=TARGET_DIR::./target/${{ matrix.target }}"
+        echo "CARGO=cross" >> $GITHUB_ENV
+        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Get release download URL
       uses: actions/download-artifact@v1
@@ -105,10 +105,10 @@ jobs:
       shell: bash
       run: |
         release_upload_url="$(cat artifacts/release-upload-url)"
-        echo "::set-env name=RELEASE_UPLOAD_URL::$release_upload_url"
+        echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
         echo "release upload url: $RELEASE_UPLOAD_URL"
         release_version="$(cat artifacts/release-version)"
-        echo "::set-env name=RELEASE_VERSION::$release_version"
+        echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
         echo "release version: $RELEASE_VERSION"
     
     - name: Build release binary
@@ -124,7 +124,7 @@ jobs:
         cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
 
         tar czf "$staging.tar.gz" "$staging"
-        echo "::set-env name=ASSET::$staging.tar.gz"
+        echo "ASSET=$staging.tar.gz"
     
     - name: Upload release archive
       uses: actions/upload-release-asset@v1.0.1
