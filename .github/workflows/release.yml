@@ -124,7 +124,7 @@ jobs:
         cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
 
         tar czf "$staging.tar.gz" "$staging"
-        echo "ASSET=$staging.tar.gz"
+        echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
     
     - name: Upload release archive
       uses: actions/upload-release-asset@v1.0.1
