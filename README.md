@@ -101,7 +101,7 @@ Astronomical dusk is at:  Never
 
 ## Configuration
 
-Heliocron supports reading some configuration options from a file located at ~/.config/helicron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise Heliocron will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
+Heliocron supports reading some configuration options from a file located at ~/.config/heliocron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise Heliocron will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
 
 ```toml
 # ~/.config/heliocron.toml
@@ -217,17 +217,25 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
   Specify the date, by default in ISO 8601 format (YYYY-MM-DD).
 
-* `f, --format` [default: %Y-%m-%d]
+* `-f, --format` [default: %Y-%m-%d]
 
   Specifiy the format of the date string passed to `--date`, using the syntax described [here](https://docs.rs/chrono/0.4.12/chrono/format/strftime/index.html) by the `chrono` crate.
 
 * `-l, --latitude` [default: 51.4769N]
 
-  Specify the north/south coordinate of the location. If `--latitude` is passed as a command line option, `--longitude` must also be provided. Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)).
+  Specify the north/south coordinate of the location. If `--latitude` is passed as a command line option, `--longitude` must also be provided.
+
+  Latitude must be a positive number between 0.0 and 90.0, suffixed with either "N" or "S" to determine north or south.
+  
+  Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)), although note that options provided over the command line take precedence.
 
 * `-o, --longitude` [default: 0.0005W]
 
-  Specify the east/west coordinate of the location. If `--longitude` is passed as a command line option, `--latitude` must also be provided. Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)).
+  Specify the east/west coordinate of the location. If `--longitude` is passed as a command line option, `--latitude` must also be provided. 
+
+  Longitude must be a positive number between 0.0 and 180.0, suffixed with either "E" or "W" to determine east or west.
+  
+  Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)), although note that options provided over the command line take precedence.
 
 * `-t, --time-zone` [default: here and now]
 
@@ -259,7 +267,28 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     | `nautical_dusk` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is settting |
     | `astronomical_dawn` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is rising |
     | `astronomical_dusk` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is setting |
+    | `custom_am` | Allows the user to specify the moment when the geometric centre of the Sun reaches a custom number of degrees below the horizon as it is rising |
+    | `custom_pm` | Allows the user to specify the moment when the geometric centre of the Sun reaches a custom number of degrees below the horizon as it is setting |
+
+  * `-a, --altitude` [required if `--event` is one of { `custom_am` | `custom_pm` }]
+
+    Specify the number of degrees that the geometric centre of the Sun is below the horizon when using a `custom_*` event.
+
+    If this option is passed for any other event, it is simply ignored.
+
+    Example:
+    ```bash
+    # specify the custom event of Jewish dusk, commonly held to be when the centre of
+    # the Sun is 8.5° below the horizon as it is setting in the evening
+    $ heliocron wait --event custom_pm --altitude 8.5
+    ```
 
   * `-o, --offset` [default: 00:00:00]
 
-    Specify an offset, either in [-]HH:MM or [-]HH:MM:SS format, from the chosen event. Negative offsets (those which are prepended with a `-` e.g. `-01:00`) will set the delay to be before the event, whilst positive offsets will shift the delay after the event.
+    Specify an offset, either in [-]HH:MM or [-]HH:MM:SS format, from the chosen event. Negative offsets (those which are prefixed with a '`-`' e.g. `-01:00`) will set the delay to be before the event, whilst positive offsets will shift the delay after the event.
+
+  * `--tag` [optional]
+    
+    Allows specifying a custom string to describe or otherwise tag the process. When viewing all running processes, e.g. with `htop`, it will then be possible to filter against this tag as it appears on the command line.
+
+    This option has no other effect on the running of the program.
