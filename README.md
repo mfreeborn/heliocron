@@ -16,7 +16,7 @@ A command line application that integrates with cron to execute tasks relative t
 
 ## Installation
 
-### 1. Pre-compiled binaries
+### Pre-compiled binaries
 
 Simply download a pre-compiled binary from the [releases](https://github.com/mfreeborn/heliocron/releases) page.
 
@@ -28,7 +28,12 @@ Here's a quick compatibility table to help choose the correct binary to download
 | Raspberry Pi 2/3/4 | [heliocron-v0.5.0-armv7-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-armv7-unknown-linux-gnueabihf.tar.gz) |
 | Linux with a 64bit CPU | [heliocron-v0.5.0-x86_64-unknown-linux-gnu.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-x86_64-unknown-linux-gnu.tar.gz) |
 
-### 2. Install with cargo
+### Install Rust and Cargo (pre-requisite)
+```bash
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### Install with cargo
 
 ```bash
 $ cargo install heliocron
@@ -39,7 +44,7 @@ $ heliocron --version
 heliocron 0.5.0
 ```
 
-### 3. Build from source
+### Build from source
 
 ```bash
 $ git clone https://github.com/mfreeborn/heliocron
