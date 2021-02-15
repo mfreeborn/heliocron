@@ -34,10 +34,11 @@ Here's a quick compatibility table to help choose the correct binary to download
 
 ```bash
 # make sure you've got an up to date version of rust and cargo installed
+# full instructions can be found at https://www.rust-lang.org/tools/install
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 .
 .
-# then simply install using cargo
+# then install using cargo
 $ cargo install heliocron
 .
 .
