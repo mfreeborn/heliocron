@@ -16,6 +16,8 @@ A command line application that integrates with cron to execute tasks relative t
 
 ## Installation
 
+There are several ways to install heliocron on your device.
+
 ### 1. Pre-compiled binaries
 
 Simply download a pre-compiled binary from the [releases](https://github.com/mfreeborn/heliocron/releases) page.
@@ -31,8 +33,13 @@ Here's a quick compatibility table to help choose the correct binary to download
 ### 2. Install with cargo
 
 ```bash
-$ cargo install heliocron
+# make sure you've got an up to date version of rust and cargo installed
+# full instructions can be found at https://www.rust-lang.org/tools/install
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 .
+.
+# then install using cargo
+$ cargo install heliocron
 .
 .
 $ heliocron --version
