@@ -65,7 +65,7 @@ jobs:
       TARGET_DIR: ./target
     strategy:
       matrix:
-        # we will build for x86_64 linux (desktop), armv6 (RPi 0-3) and armv7 (RPi4)
+        # we will build for x86_64 linux (desktop), armv6 (RPi 0/1) and armv7 (RPi2/3/4)
         build: [linux, linux-armv7, linux-armv6]
         include:
         - build: linux
@@ -73,7 +73,7 @@ jobs:
         - build: linux-armv7
           target: armv7-unknown-linux-gnueabihf
         - build: linux-armv6
-          target: arm-unknown-linux-gnueabi
+          target: arm-unknown-linux-gnueabihf
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
