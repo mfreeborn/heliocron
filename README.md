@@ -26,7 +26,7 @@ Here's a quick compatibility table to help choose the correct binary to download
 
 | Platform | Binary |
 | -------- | ------ |
-| Raspberry Pi 0/1 | [heliocron-v0.5.0-arm-unknown-linux-gnueabi.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-arm-unknown-linux-gnueabi.tar.gz) |
+| Raspberry Pi 0/1 | [heliocron-v0.5.0-arm-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-arm-unknown-linux-gnueabihf.tar.gz) |
 | Raspberry Pi 2/3/4 | [heliocron-v0.5.0-armv7-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-armv7-unknown-linux-gnueabihf.tar.gz) |
 | Linux with a 64bit CPU | [heliocron-v0.5.0-x86_64-unknown-linux-gnu.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.5.0/heliocron-v0.5.0-x86_64-unknown-linux-gnu.tar.gz) |
 
