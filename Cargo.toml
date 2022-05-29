@@ -27,6 +27,8 @@ dirs = "2.0"
 serde = {version = "1.0", features = ["derive"]}
 structopt = "0.3"
 toml = "0.5"
+tokio = { version = "1", features = ["full"] }
+tokio-walltime =  "0.1.0"
 
 [dev-dependencies]
 assert_cmd = "0.12"

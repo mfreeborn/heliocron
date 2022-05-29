@@ -1,8 +1,9 @@
-use std::error;
+use std::error::Error;
+use tokio_walltime;
 
 use chrono;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum HeliocronError {
     Config(ConfigErrorKind),
     Runtime(RuntimeErrorKind),
@@ -39,21 +40,11 @@ impl ConfigErrorKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum RuntimeErrorKind {
     NonOccurringEvent,
     PastEvent,
-}
-
-impl RuntimeErrorKind {
-    fn as_str(&self) -> &str {
-        match *self {
-            RuntimeErrorKind::NonOccurringEvent => "The chosen event does not occur on this day.",
-            RuntimeErrorKind::PastEvent => {
-                "The chosen event occurred in the past; cannot wait a negative amount of time."
-            }
-        }
-    }
+    SleepError(tokio_walltime::Error),
 }
 
 impl std::fmt::Display for HeliocronError {
@@ -76,27 +67,28 @@ impl std::fmt::Display for HeliocronError {
                 f,
                 "Runtime error: {}",
                 match err {
-                    RuntimeErrorKind::NonOccurringEvent => err.as_str().to_string(),
-                    RuntimeErrorKind::PastEvent => err.as_str().to_string(),
+                    RuntimeErrorKind::NonOccurringEvent =>
+                        "The chosen event does not occur on this day.".to_string(),
+                    RuntimeErrorKind::PastEvent => {
+                        "The chosen event occurred in the past; cannot wait a negative amount of time.".to_string()
+                    }
+                    RuntimeErrorKind::SleepError(e) => e.to_string(),
                 }
             ),
         }
     }
 }
 
-impl error::Error for HeliocronError {
-    fn description(&self) -> &str {
-        match *self {
-            HeliocronError::Config(ref err) => err.as_str(),
-            HeliocronError::Runtime(ref err) => err.as_str(),
-        }
+impl Error for HeliocronError {}
+
+impl From<chrono::ParseError> for HeliocronError {
+    fn from(_err: chrono::ParseError) -> Self {
+        HeliocronError::Config(ConfigErrorKind::ParseDate)
     }
 }
 
-impl From<chrono::ParseError> for HeliocronError {
-    fn from(err: chrono::ParseError) -> Self {
-        match err {
-            _err => HeliocronError::Config(ConfigErrorKind::ParseDate),
-        }
+impl From<tokio_walltime::Error> for HeliocronError {
+    fn from(err: tokio_walltime::Error) -> Self {
+        HeliocronError::Runtime(RuntimeErrorKind::SleepError(err))
     }
 }

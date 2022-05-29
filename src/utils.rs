@@ -4,17 +4,20 @@ use chrono::{DateTime, Duration, FixedOffset};
 
 use super::errors::{HeliocronError, RuntimeErrorKind};
 
+use tokio_walltime;
+
 type Result<T> = result::Result<T, HeliocronError>;
 
-fn sleep(dur: std::time::Duration) {
+async fn sleep(time: DateTime<FixedOffset>) -> Result<()> {
     if cfg!(feature = "integration-test") || cfg!(test) {
-        println!("Fake sleep for {}s.", dur.as_secs());
+        println!("Fake sleep until {}s.", time);
     } else {
-        std::thread::sleep(dur);
-    };
+        tokio_walltime::sleep_until(time).await?;
+    }
+    Ok(())
 }
 
-pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) -> Result<()> {
+pub async fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) -> Result<()> {
     let duration_to_wait = match duration.to_std() {
         Ok(dur) => Ok(dur),
         Err(_) => Err(HeliocronError::Runtime(RuntimeErrorKind::PastEvent)),
@@ -25,7 +28,7 @@ pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) -> Result<()>
         duration_to_wait.as_secs(),
         wait_until
     );
-    sleep(duration_to_wait);
+    sleep(wait_until).await?;
     Ok(())
 }
 
@@ -33,10 +36,10 @@ pub fn wait(duration: Duration, wait_until: DateTime<FixedOffset>) -> Result<()>
 mod tests {
     use super::*;
     use chrono::{FixedOffset, TimeZone};
-    #[test]
-    fn test_wait() {
+    #[tokio::test]
+    async fn test_wait() {
         let duration_to_wait = Duration::seconds(5);
         let wait_until = FixedOffset::west(0).timestamp(9999999999, 0);
-        wait(duration_to_wait, wait_until).unwrap();
+        wait(duration_to_wait, wait_until).await.unwrap();
     }
 }

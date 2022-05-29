@@ -13,7 +13,7 @@ use super::{
 
 type Result<T> = result::Result<T, HeliocronError>;
 
-#[derive(Debug, StructOpt, Clone)]
+#[derive(Debug, StructOpt)]
 #[structopt(
     about = "A simple utility for finding out what time various solar events occur, such as sunrise and \
              sunset, at a given location on a given date. It can be integrated into cron commands to \
@@ -49,7 +49,7 @@ struct Cli {
     longitude: Option<String>,
 }
 
-#[derive(Debug, StructOpt, Clone)]
+#[derive(Debug, StructOpt)]
 pub enum Subcommand {
     Report {},
 

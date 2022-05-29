@@ -12,7 +12,7 @@ pub fn display_report(solar_calculations: calc::SolarCalculations) -> Result<()>
     Ok(())
 }
 
-pub fn wait(
+pub async fn wait(
     event: enums::Event,
     offset: Duration,
     solar_calculations: calc::SolarCalculations,
@@ -41,7 +41,7 @@ pub fn wait(
 
             let duration_to_wait = wait_until - local_time;
 
-            utils::wait(duration_to_wait, wait_until)?;
+            utils::wait(duration_to_wait, wait_until).await?;
         }
         None => {
             Err(errors::HeliocronError::Runtime(
