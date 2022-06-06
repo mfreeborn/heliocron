@@ -18,18 +18,11 @@ impl EventTime {
     }
 
     pub fn is_some(&self) -> bool {
-        if self.datetime.is_some() {
-            true
-        } else {
-            false
-        }
+        self.datetime.is_some()
     }
 
     pub fn time(&self) -> Option<NaiveTime> {
-        match self.datetime {
-            Some(datetime) => Some(datetime.time()),
-            None => None,
-        }
+        self.datetime.map(|dt| dt.time())
     }
 }
 

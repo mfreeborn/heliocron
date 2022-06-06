@@ -37,9 +37,9 @@ pub async fn wait(
             utils::wait(wait_until).await?;
         }
         None => {
-            Err(errors::HeliocronError::Runtime(
+            return Err(errors::HeliocronError::Runtime(
                 errors::RuntimeErrorKind::NonOccurringEvent,
-            ))?;
+            ));
         }
     };
     Ok(())

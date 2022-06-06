@@ -174,9 +174,7 @@ impl Config {
                 ..
             } => {
                 // do some gymnastics here. Structopt already validates that altitude is provided
-                let altitude = custom_altitude
-                    .map(|a| parsers::parse_altitude(a))
-                    .transpose()?;
+                let altitude = custom_altitude.map(parsers::parse_altitude).transpose()?;
                 let event = enums::Event::new(event_name.as_str(), altitude)?;
                 Action::Wait {
                     offset: offset?,
