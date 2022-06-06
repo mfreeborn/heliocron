@@ -1,10 +1,10 @@
-# Heliocron
+# heliocron
 
 [![crates.io](https://img.shields.io/crates/v/heliocron.svg)](https://crates.io/crates/heliocron)
 [![crates.io](https://img.shields.io/crates/d/heliocron.svg)](https://crates.io/crates/heliocron)
 [![Build Status](https://github.com/mfreeborn/heliocron/workflows/ci/badge.svg)](https://github.com/mfreeborn/heliocron/actions)
 
-A command line application that integrates with cron to execute tasks relative to sunset, sunrise and other such solar events.
+A simple command line application that integrates with `cron` to execute tasks relative to sunset, sunrise and other such solar events.
 
 ## Table of Contents
 
@@ -16,11 +16,11 @@ A command line application that integrates with cron to execute tasks relative t
 
 ## Installation
 
-There are several ways to install heliocron on your device.
+There are several ways to install `heliocron` on your device.
 
 ### 1. Pre-compiled binaries
 
-Simply download a pre-compiled binary from the [releases](https://github.com/mfreeborn/heliocron/releases) page.
+You can download a pre-compiled binary from the [releases](https://github.com/mfreeborn/heliocron/releases) page.
 
 Here's a quick compatibility table to help choose the correct binary to download:
 
@@ -68,7 +68,7 @@ wait --event sunset && ls ~
 Thread going to sleep for _ seconds until 2020-02-25 17:32:17 +00:00. Press ctrl+C to cancel.
 ```
 
-Integration with Cron for recurring tasks is easy. The following snippet shows a Crontab entry which will run every morning at 2am. Heliocron will wait until 30 minutes before sunrise, before allowing the execution of the ``turn-on-lights.sh`` script.
+Integration with `cron` for recurring tasks is easy. The following snippet shows a `crontab` entry which will run every morning at 2am. `heliocron` will wait until 30 minutes before sunrise, before allowing the execution of the ``turn-on-lights.sh`` script.
 
 ```bash
 0 2 * * * heliocron --latitude 51.4769N --longitude 0.0005W wait --event sunrise --offset -00:30 \
@@ -108,7 +108,7 @@ Astronomical dusk is at:  Never
 
 ## Configuration
 
-Heliocron supports reading some configuration options from a file located at ~/.config/heliocron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise Heliocron will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
+`heliocron` supports reading some configuration options from a file located at ~/.config/heliocron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise `heliocron` will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
 
 ```toml
 # ~/.config/heliocron.toml
@@ -117,7 +117,7 @@ latitude = "51.5014N"
 longitude = "0.1419W"
 ```
 
-Now, using Heliocron without providing specific coordinates will yield the following output:
+Now, using `heliocron` without providing specific coordinates will yield the following output:
 
 ```bash
 $ heliocron -d 2020-03-08 report
@@ -226,7 +226,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
 * `-f, --format` [default: %Y-%m-%d]
 
-  Specifiy the format of the date string passed to `--date`, using the syntax described [here](https://docs.rs/chrono/0.4.12/chrono/format/strftime/index.html) by the `chrono` crate.
+  Specify the format of the date string passed to `--date`, using the syntax described [here](https://docs.rs/chrono/0.4.12/chrono/format/strftime/index.html) by the `chrono` crate.
 
 * `-l, --latitude` [default: 51.4769N]
 
@@ -271,7 +271,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     | `civil_dawn` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is rising |
     | `civil_dusk` | The moment when the geometric centre of the Sun reaches 6° below the horizon as it is setting |
     | `nautical_dawn` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is rising |
-    | `nautical_dusk` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is settting |
+    | `nautical_dusk` | The moment when the geometric centre of the Sun reaches 12° below the horizon as it is setting |
     | `astronomical_dawn` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is rising |
     | `astronomical_dusk` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is setting |
     | `custom_am` | Allows the user to specify the moment when the geometric centre of the Sun reaches a custom number of degrees below the horizon as it is rising |
@@ -294,6 +294,10 @@ heliocron [Options] <Subcommand> [Subcommand Options]
   * `-o, --offset` [default: 00:00:00]
 
     Specify an offset, either in [-]HH:MM or [-]HH:MM:SS format, from the chosen event. Negative offsets (those which are prefixed with a '`-`' e.g. `-01:00`) will set the delay to be before the event, whilst positive offsets will shift the delay after the event.
+
+  * `--run-missed-task`
+
+    If this flag is present, then the process will exit successfully even if the event was missed. This can happen, for example, if the device running `heliocron` goes to sleep and does not wake up until after the event has occurred. Without this flag, if the event is missed by more than 30 seconds, then the task will not be run. 
 
   * `--tag` [optional]
     

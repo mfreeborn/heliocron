@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.6.0] - 2022-XX-XX
 ### Added
+- Add `--run-missed-task` flag to `wait` subcommand ([#48](https://github.com/mfreeborn/heliocron/pull/48)).
 - `SleepError` variant for `RuntimeErrorKind`. Contributed by [@4e554c4c](https://github.com/4e554c4c) as part of [#45](https://github.com/mfreeborn/heliocron/pull/45).
 
 ### Changed
@@ -16,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Updated missing details in README.
-
 
 ## [Pre v0.5.0]
 - Changelog not started
