@@ -44,13 +44,14 @@ impl ConfigErrorKind {
 pub enum RuntimeErrorKind {
     NonOccurringEvent,
     PastEvent,
+    EventMissed(i64),
     SleepError(tokio_walltime::Error),
 }
 
 impl std::fmt::Display for HeliocronError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            HeliocronError::Config(ref err) => write!(
+            Self::Config(ref err) => write!(
                 f,
                 "Config error: {}",
                 match err {
@@ -63,7 +64,7 @@ impl std::fmt::Display for HeliocronError {
                     ConfigErrorKind::InvalidEvent => err.as_str().to_string(),
                 }
             ),
-            HeliocronError::Runtime(ref err) => write!(
+            Self::Runtime(ref err) => write!(
                 f,
                 "Runtime error: {}",
                 match err {
@@ -72,6 +73,7 @@ impl std::fmt::Display for HeliocronError {
                     RuntimeErrorKind::PastEvent => {
                         "The chosen event occurred in the past; cannot wait a negative amount of time.".to_string()
                     }
+                    RuntimeErrorKind::EventMissed(by) => format!("Event missed by {by}s"),
                     RuntimeErrorKind::SleepError(e) => e.to_string(),
                 }
             ),

@@ -16,31 +16,40 @@ pub async fn wait(
     event: enums::Event,
     offset: Duration,
     solar_calculations: calc::SolarCalculations,
+    run_missed_event: bool,
 ) -> Result<()> {
     let event_time = match event {
         enums::Event::SolarNoon => solar_calculations.get_solar_noon(),
-        enums::Event::Sunrise { .. }
-        | enums::Event::Sunset { .. }
-        | enums::Event::CivilDawn { .. }
-        | enums::Event::CivilDusk { .. }
-        | enums::Event::NauticalDawn { .. }
-        | enums::Event::NauticalDusk { .. }
-        | enums::Event::AstronomicalDawn { .. }
-        | enums::Event::AstronomicalDusk { .. }
-        | enums::Event::CustomAM { .. }
-        | enums::Event::CustomPM { .. } => solar_calculations.calculate_event_time(event),
+        _ => solar_calculations.calculate_event_time(event),
     };
 
     match event_time.datetime {
         Some(datetime) => {
             let wait_until = datetime + offset;
             utils::wait(wait_until).await?;
+
+            // If the device running heliocron is asleep for whetever reason, it is possible that this future
+            // will return after `wait_until`. As such, we need to handle whether to run or skip the task
+            // if the event was missed. We allow a default tolerance of 30s, which should be more than enough to
+            // catch any scheduling delays that could cause a second or two's delay. At some point, this arbitrary
+            // number could be made configurable, if desired.
+
+            if run_missed_event {
+                Ok(())
+            } else {
+                let now = chrono::Utc::now().with_timezone(wait_until.offset());
+                let missed_by = (now - wait_until).num_seconds();
+                if missed_by > 30 {
+                    Err(errors::HeliocronError::Runtime(
+                        errors::RuntimeErrorKind::EventMissed(missed_by),
+                    ))
+                } else {
+                    Ok(())
+                }
+            }
         }
-        None => {
-            return Err(errors::HeliocronError::Runtime(
-                errors::RuntimeErrorKind::NonOccurringEvent,
-            ));
-        }
-    };
-    Ok(())
+        None => Err(errors::HeliocronError::Runtime(
+            errors::RuntimeErrorKind::NonOccurringEvent,
+        )),
+    }
 }
