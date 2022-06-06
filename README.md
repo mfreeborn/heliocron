@@ -276,6 +276,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     | `astronomical_dusk` | The moment when the geometric centre of the Sun reaches 18° below the horizon as it is setting |
     | `custom_am` | Allows the user to specify the moment when the geometric centre of the Sun reaches a custom number of degrees below the horizon as it is rising |
     | `custom_pm` | Allows the user to specify the moment when the geometric centre of the Sun reaches a custom number of degrees below the horizon as it is setting |
+    | `solar_noon` | The moment when the Sun reaches its highest point in the sky |
 
   * `-a, --altitude` [required if `--event` is one of { `custom_am` | `custom_pm` }]
 
