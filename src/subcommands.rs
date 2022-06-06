@@ -1,6 +1,6 @@
 use std::result;
 
-use chrono::{Duration, FixedOffset, Local, TimeZone};
+use chrono::Duration;
 
 use super::{calc, enums, errors, report, utils};
 
@@ -12,7 +12,7 @@ pub fn display_report(solar_calculations: calc::SolarCalculations) -> Result<()>
     Ok(())
 }
 
-pub fn wait(
+pub async fn wait(
     event: enums::Event,
     offset: Duration,
     solar_calculations: calc::SolarCalculations,
@@ -34,14 +34,7 @@ pub fn wait(
     match event_time.datetime {
         Some(datetime) => {
             let wait_until = datetime + offset;
-
-            let local_time = Local::now();
-            let local_time =
-                local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
-
-            let duration_to_wait = wait_until - local_time;
-
-            utils::wait(duration_to_wait, wait_until)?;
+            utils::wait(wait_until).await?;
         }
         None => {
             Err(errors::HeliocronError::Runtime(

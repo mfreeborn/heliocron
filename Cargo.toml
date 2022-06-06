@@ -26,6 +26,8 @@ chrono = "0.4"
 dirs = "2.0"
 serde = {version = "1.0", features = ["derive"]}
 structopt = "0.3"
+tokio = { version = "1", features = ["full"] }
+tokio-walltime =  "0.1.1"
 toml = "0.5"
 
 [dev-dependencies]
