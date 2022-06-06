@@ -8,8 +8,12 @@ async fn run_heliocron() -> Result<(), errors::HeliocronError> {
     let solar_calculations = calc::SolarCalculations::new(config.date, config.coordinates);
     match config.action {
         config::Action::Report => subcommands::display_report(solar_calculations)?,
-        config::Action::Wait { event, offset } => {
-            subcommands::wait(event, offset, solar_calculations).await?;
+        config::Action::Wait {
+            event,
+            offset,
+            run_missed_task,
+        } => {
+            subcommands::wait(event, offset, solar_calculations, run_missed_task).await?;
         }
     }
     Ok(())

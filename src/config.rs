@@ -86,6 +86,12 @@ pub enum Subcommand {
             help = "Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program."
         )]
         tag: Option<String>,
+
+        #[structopt(
+            help = "Define whether the task should still be run even if the event has been missed. A tolerance of 30 seconds after the event is allowed before a task would be skipped. Setting this flag will cause the task to run regardless of how overdue it is.",
+            long = "run-missed-event"
+        )]
+        run_missed_task: bool,
     },
 }
 
@@ -129,6 +135,7 @@ pub enum Action {
     Wait {
         event: enums::Event,
         offset: Duration,
+        run_missed_task: bool,
     },
 }
 
@@ -171,6 +178,7 @@ impl Config {
                 offset,
                 custom_altitude,
                 event_name,
+                run_missed_task,
                 ..
             } => {
                 // do some gymnastics here. Structopt already validates that altitude is provided
@@ -179,6 +187,7 @@ impl Config {
                 Action::Wait {
                     offset: offset?,
                     event,
+                    run_missed_task,
                 }
             }
             Subcommand::Report {} => Action::Report,
