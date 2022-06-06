@@ -295,7 +295,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
     Specify an offset, either in [-]HH:MM or [-]HH:MM:SS format, from the chosen event. Negative offsets (those which are prefixed with a '`-`' e.g. `-01:00`) will set the delay to be before the event, whilst positive offsets will shift the delay after the event.
 
-  * `--run-missed-task`
+  * `--run-missed-task` [optional]
 
     If this flag is present, then the process will exit successfully even if the event was missed. This can happen, for example, if the device running `heliocron` goes to sleep and does not wake up until after the event has occurred. Without this flag, if the event is missed by more than 30 seconds, then the task will not be run. 
 
