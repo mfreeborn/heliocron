@@ -16,7 +16,7 @@ pub async fn wait(
     event: enums::Event,
     offset: Duration,
     solar_calculations: calc::SolarCalculations,
-    run_missed_event: bool,
+    run_missed_task: bool,
 ) -> Result<()> {
     let event_time = match event {
         enums::Event::SolarNoon => solar_calculations.get_solar_noon(),
@@ -34,7 +34,7 @@ pub async fn wait(
             // catch any scheduling delays that could cause a second or two's delay. At some point, this arbitrary
             // number could be made configurable, if desired.
 
-            if run_missed_event {
+            if run_missed_task {
                 Ok(())
             } else {
                 let now = chrono::Utc::now().with_timezone(wait_until.offset());

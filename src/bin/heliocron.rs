@@ -11,9 +11,9 @@ async fn run_heliocron() -> Result<(), errors::HeliocronError> {
         config::Action::Wait {
             event,
             offset,
-            run_missed_event,
+            run_missed_task,
         } => {
-            subcommands::wait(event, offset, solar_calculations, run_missed_event).await?;
+            subcommands::wait(event, offset, solar_calculations, run_missed_task).await?;
         }
     }
     Ok(())
