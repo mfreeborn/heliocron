@@ -1,6 +1,6 @@
 use std::result;
 
-use chrono::{Duration, FixedOffset, Local, TimeZone};
+use chrono::Duration;
 
 use super::{calc, enums, errors, report, utils};
 
@@ -34,14 +34,7 @@ pub async fn wait(
     match event_time.datetime {
         Some(datetime) => {
             let wait_until = datetime + offset;
-
-            let local_time = Local::now();
-            let local_time =
-                local_time.with_timezone(&FixedOffset::from_offset(local_time.offset()));
-
-            let duration_to_wait = wait_until - local_time;
-
-            utils::wait(duration_to_wait, wait_until).await?;
+            utils::wait(wait_until).await?;
         }
         None => {
             Err(errors::HeliocronError::Runtime(
