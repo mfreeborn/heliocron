@@ -728,9 +728,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-walltime"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f18055fbae32200c0fcf314ef8a8ff4c01295a11f0384e911013d97627f57bdd"
+checksum = "929f8e1e28eb3b70a39e2c0b62e8858f985fbd4844cdc5e552ad40d1527dc98f"
 dependencies = [
  "chrono",
  "errno",
