@@ -7,10 +7,6 @@ use super::traits::{DateTimeExt, NaiveTimeExt};
 
 #[derive(Debug, Clone)]
 struct SolarCalculationsRow {
-    // represents one row as keyed by time of day in the NOAA calculations spreadsheet
-    date: DateTime<FixedOffset>,
-    coordinates: structs::Coordinates,
-
     solar_declination: f64,
     solar_noon_fraction: f64,
     corrected_solar_elevation_angle: f64,
@@ -108,28 +104,21 @@ impl SolarCalculationsRow {
 
         let atmospheric_refraction = (if solar_elevation_angle > 85.0 {
             0.0
+        } else if solar_elevation_angle > 5.0 {
+            58.1 / solar_elevation_angle.to_radians().tan()
+                - 0.07 / solar_elevation_angle.to_radians().tan().powi(3)
+                + 0.000086 / solar_elevation_angle.to_radians().tan().powi(5)
+        } else if solar_elevation_angle > -0.575 {
+            1735.0
+                + solar_elevation_angle
+                    * (103.4 + solar_elevation_angle * (-12.79 + solar_elevation_angle * 0.711))
         } else {
-            if solar_elevation_angle > 5.0 {
-                58.1 / solar_elevation_angle.to_radians().tan()
-                    - 0.07 / solar_elevation_angle.to_radians().tan().powi(3)
-                    + 0.000086 / solar_elevation_angle.to_radians().tan().powi(5)
-            } else {
-                if solar_elevation_angle > -0.575 {
-                    1735.0
-                        + solar_elevation_angle
-                            * (103.4
-                                + solar_elevation_angle * (-12.79 + solar_elevation_angle * 0.711))
-                } else {
-                    -20.772 / solar_elevation_angle.to_radians().tan()
-                }
-            }
+            -20.772 / solar_elevation_angle.to_radians().tan()
         } / 3600.0);
 
         let corrected_solar_elevation_angle = solar_elevation_angle + atmospheric_refraction;
 
         SolarCalculationsRow {
-            date,
-            coordinates,
             solar_declination,
             solar_noon_fraction,
             corrected_solar_elevation_angle,

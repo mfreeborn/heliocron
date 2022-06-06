@@ -40,7 +40,7 @@ pub fn parse_date(
 }
 
 pub fn parse_event(event: &str, custom_altitude: Option<f64>) -> Result<Event> {
-    Ok(Event::new(event, custom_altitude)?)
+    Event::new(event, custom_altitude)
 }
 
 pub fn parse_offset(offset: &str) -> Result<Duration> {
@@ -75,7 +75,7 @@ pub fn parse_altitude(altitude: String) -> Result<f64> {
         Err(_) => Err(HeliocronError::Config(ConfigErrorKind::ParseAltitude)),
     }?;
 
-    if (altitude >= -90.0) & (altitude <= 90.0) {
+    if (-90.0..=90.0).contains(&altitude) {
         Ok(altitude)
     } else {
         Err(HeliocronError::Config(ConfigErrorKind::ParseAltitude))
