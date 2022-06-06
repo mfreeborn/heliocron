@@ -73,7 +73,7 @@ impl std::fmt::Display for HeliocronError {
                     RuntimeErrorKind::PastEvent => {
                         "The chosen event occurred in the past; cannot wait a negative amount of time.".to_string()
                     }
-                    RuntimeErrorKind::EventMissed(by) => format!("Event missed by {by}s"),
+                    RuntimeErrorKind::EventMissed(by) => format!("Event missed by {}s", by),
                     RuntimeErrorKind::SleepError(e) => e.to_string(),
                 }
             ),
