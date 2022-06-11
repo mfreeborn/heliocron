@@ -97,6 +97,8 @@ fn test_report_json_output() {
             cmd.args(&[
                 "--date",
                 "2022-06-11",
+                "--time-zone",
+                "+01:00",
                 "--latitude",
                 "51.4N",
                 "--longitude",
