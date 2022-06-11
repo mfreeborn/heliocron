@@ -2,7 +2,6 @@ use super::{enums, structs};
 
 use chrono::{DateTime, Duration, FixedOffset, NaiveTime, Offset, Timelike};
 
-use super::structs::Coordinate;
 use super::traits::{DateTimeExt, NaiveTimeExt};
 
 #[derive(Debug, Clone)]
@@ -76,15 +75,13 @@ impl SolarCalculationsRow {
                     * (solar_mean_anomaly.to_radians() * 2.0).sin())
             .to_degrees();
 
-        let solar_noon_fraction = (720.0 - 4.0 * coordinates.longitude.value - equation_of_time
-            + time_zone * 60.0)
-            / 1440.0;
+        let solar_noon_fraction =
+            (720.0 - 4.0 * *coordinates.longitude - equation_of_time + time_zone * 60.0) / 1440.0;
 
-        let true_solar_time = (date.time().day_fraction() * 1440.0
-            + equation_of_time
-            + 4.0 * coordinates.longitude.value
-            - 60.0 * time_zone)
-            % 1440.0;
+        let true_solar_time =
+            (date.time().day_fraction() * 1440.0 + equation_of_time + 4.0 * *coordinates.longitude
+                - 60.0 * time_zone)
+                % 1440.0;
 
         let true_hour_angle = if true_solar_time / 4.0 < 0.0 {
             true_solar_time / 4.0 + 180.0
@@ -92,9 +89,9 @@ impl SolarCalculationsRow {
             true_solar_time / 4.0 - 180.0
         };
 
-        let solar_zenith_angle = (coordinates.latitude.value.to_radians().sin()
+        let solar_zenith_angle = (coordinates.latitude.to_radians().sin()
             * solar_declination.to_radians().sin()
-            + coordinates.latitude.value.to_radians().cos()
+            + coordinates.latitude.to_radians().cos()
                 * solar_declination.to_radians().cos()
                 * true_hour_angle.to_radians().cos())
         .acos()

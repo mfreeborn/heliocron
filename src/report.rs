@@ -1,6 +1,7 @@
-use std::fmt;
+use std::{collections::HashMap, fmt};
 
 use chrono::{DateTime, Duration, FixedOffset};
+use serde::ser::{Serialize, SerializeStruct};
 
 use super::{
     calc, enums,
@@ -32,6 +33,35 @@ impl fmt::Display for SolarReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let fmt_str = self.format_report();
         write!(f, "{}", fmt_str)
+    }
+}
+
+impl Serialize for SolarReport {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut state = serializer.serialize_struct("SolarReport", 12)?;
+        state.serialize_field("date", &self.date.to_rfc3339())?;
+        state.serialize_field("location", &self.coordinates)?;
+        state.serialize_field("day_length", &self.day_length.num_seconds())?;
+        state.serialize_field("solar_noon", &self.solar_noon)?;
+        state.serialize_field("sunrise", &self.sunrise)?;
+        state.serialize_field("sunset", &self.sunset)?;
+
+        let mut dawn = HashMap::with_capacity(3);
+        dawn.insert("civil", &self.civil_dawn);
+        dawn.insert("nautical", &self.nautical_dawn);
+        dawn.insert("astronomical", &self.astronomical_dawn);
+        state.serialize_field("dawn", &dawn)?;
+
+        let mut dusk = HashMap::with_capacity(3);
+        dusk.insert("civil", &self.civil_dusk);
+        dusk.insert("nautical", &self.nautical_dusk);
+        dusk.insert("astronomical", &self.astronomical_dusk);
+        state.serialize_field("dusk", &dusk)?;
+
+        state.end()
     }
 }
 
@@ -74,8 +104,8 @@ impl SolarReport {
         format!(
             "LOCATION\n\
         --------\n\
-        {}\n\
-        {}\n\n\
+        Latitude: {}\n\
+        Longitude: {}\n\n\
         DATE\n\
         ----\n\
         {}\n\n\
@@ -126,8 +156,8 @@ mod tests {
         // check that a 'new' method is defined and takes a coordinate and a date as parameters
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates {
-            latitude: structs::Latitude { value: 0.0 },
-            longitude: structs::Longitude { value: 0.0 },
+            latitude: structs::Latitude(0.0),
+            longitude: structs::Longitude(0.0),
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
@@ -140,8 +170,8 @@ mod tests {
         // check that the report contains all the correct metrics
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
         let coordinates = structs::Coordinates {
-            latitude: structs::Latitude { value: 0.0 },
-            longitude: structs::Longitude { value: 0.0 },
+            latitude: structs::Latitude(0.0),
+            longitude: structs::Longitude(0.0),
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
@@ -151,6 +181,8 @@ mod tests {
 
         assert!(report_str.contains("LOCATION"));
         assert!(report_str.contains("DATE"));
+        assert!(report_str.contains("Latitude"));
+        assert!(report_str.contains("Longitude"));
         assert!(report_str.contains("Sunrise is at"));
         assert!(report_str.contains("Solar noon is at"));
         assert!(report_str.contains("Sunset is at"));
@@ -300,5 +332,52 @@ mod tests {
         assert_eq!(None, report.astronomical_dawn.datetime);
         assert_eq!(None, report.astronomical_dusk.datetime);
         assert_eq!("24h 0m 0s", SolarReport::day_length_hms(report.day_length));
+    }
+
+    #[test]
+    fn test_json_output_format() {
+        // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
+        let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
+        let coordinates =
+            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        let calcs = calc::SolarCalculations::new(date, coordinates);
+
+        let report = SolarReport::new(calcs);
+
+        let expected = serde_json::json!({
+            "location": {"latitude": 55.9533, "longitude": -3.1883},
+            "date": "2020-03-25T12:00:00+00:00",
+            "day_length": 45412,
+            "solar_noon": "2020-03-25T12:18:33+00:00",
+            "sunrise": "2020-03-25T06:00:07+00:00",
+            "sunset": "2020-03-25T18:36:59+00:00",
+            "dawn": {"civil": "2020-03-25T05:22:43+00:00", "nautical": "2020-03-25T04:37:42+00:00", "astronomical": "2020-03-25T03:49:09+00:00"},
+            "dusk": {"civil": "2020-03-25T19:14:23+00:00", "nautical": "2020-03-25T19:59:24+00:00", "astronomical": "2020-03-25T20:47:57+00:00"},
+        });
+
+        assert_eq!(serde_json::to_value(report).unwrap(), expected);
+    }
+    #[test]
+    fn test_json_output_format_with_null() {
+        // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
+        let date = DateTime::parse_from_rfc3339("2022-06-11T12:00:00+01:00").unwrap();
+        let coordinates =
+            structs::Coordinates::from_decimal_degrees("51.4000N", "5.4670W").unwrap();
+        let calcs = calc::SolarCalculations::new(date, coordinates);
+
+        let report = SolarReport::new(calcs);
+
+        let expected = serde_json::json!({
+            "location": {"latitude": 51.4000, "longitude": -5.4670},
+            "date": "2022-06-11T12:00:00+01:00",
+            "day_length": 59534,
+            "solar_noon": "2022-06-11T13:21:31+01:00",
+            "sunrise": "2022-06-11T05:05:24+01:00",
+            "sunset": "2022-06-11T21:37:38+01:00",
+            "dawn": {"civil": "2022-06-11T04:18:29+01:00", "nautical": "2022-06-11T03:06:40+01:00", "astronomical": null},
+            "dusk": {"civil": "2022-06-11T22:24:34+01:00", "nautical": "2022-06-11T23:36:23+01:00", "astronomical": null},
+        });
+
+        assert_eq!(serde_json::to_value(report).unwrap(), expected);
     }
 }

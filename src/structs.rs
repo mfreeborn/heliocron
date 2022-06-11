@@ -1,11 +1,11 @@
-use std::{fmt, result};
+use std::{fmt, ops::Deref, result};
 
 use chrono::{DateTime, FixedOffset, NaiveTime};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::errors::{ConfigErrorKind, HeliocronError};
 
-type Result<T> = result::Result<T, HeliocronError>;
+type Result<T, E = HeliocronError> = result::Result<T, E>;
 
 #[derive(Debug)]
 pub struct EventTime {
@@ -23,6 +23,18 @@ impl EventTime {
 
     pub fn time(&self) -> Option<NaiveTime> {
         self.datetime.map(|dt| dt.time())
+    }
+}
+
+impl Serialize for EventTime {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self.datetime {
+            Some(datetime) => serializer.serialize_str(&datetime.to_rfc3339()),
+            None => serializer.serialize_none(),
+        }
     }
 }
 
@@ -49,48 +61,48 @@ fn invalid_coordinates_error(msg: &'static str) -> HeliocronError {
     HeliocronError::Config(ConfigErrorKind::InvalidCoordindates(msg))
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct Coordinates {
     pub latitude: Latitude,
     pub longitude: Longitude,
 }
 
-#[derive(Debug, Deserialize, Clone, Copy)]
-pub struct Latitude {
-    pub value: f64,
-}
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct Latitude(pub f64);
 
-#[derive(Debug, Deserialize, Clone, Copy)]
-pub struct Longitude {
-    pub value: f64,
+impl Deref for Latitude {
+    type Target = f64;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl fmt::Display for Latitude {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let compass_direction = if self.value.is_sign_positive() {
-            "N"
-        } else {
-            "S"
-        };
-        write!(f, "Latitude: {:.4}{}", self.value.abs(), compass_direction)
+        let compass_direction = if self.is_sign_positive() { "N" } else { "S" };
+        write!(f, "{:.4}{}", self.abs(), compass_direction)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+pub struct Longitude(pub f64);
+
+impl Deref for Longitude {
+    type Target = f64;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
 impl fmt::Display for Longitude {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let compass_direction = if self.value.is_sign_positive() {
-            "E"
-        } else {
-            "W"
-        };
-        write!(f, "Longitude: {:.4}{}", self.value.abs(), compass_direction)
+        let compass_direction = if self.is_sign_positive() { "E" } else { "W" };
+        write!(f, "{:.4}{}", self.abs(), compass_direction)
     }
 }
 
 pub trait Coordinate: Sized {
     fn from_decimal_degrees(coordinate: &str) -> Result<Self>;
-
-    fn to_radians(&self) -> f64;
 
     fn parse_compass_direction(coordinate: &str) -> Result<char>;
     fn parse_decimal_degrees(coordinate: &str) -> Result<f64>;
@@ -105,9 +117,7 @@ impl Coordinate for Latitude {
         let decimal_degrees: f64 = Self::parse_decimal_degrees(latitude)?;
         let compass_correction: f64 = Self::compass_correction(compass_direction)?;
 
-        Ok(Latitude {
-            value: decimal_degrees * compass_correction,
-        })
+        Ok(Latitude(decimal_degrees * compass_correction))
     }
 
     fn parse_compass_direction(latitude: &str) -> Result<char> {
@@ -147,10 +157,6 @@ impl Coordinate for Latitude {
             )),
         }
     }
-
-    fn to_radians(&self) -> f64 {
-        self.value.to_radians()
-    }
 }
 
 impl Coordinate for Longitude {
@@ -161,9 +167,7 @@ impl Coordinate for Longitude {
         let decimal_degrees: f64 = Self::parse_decimal_degrees(longitude)?;
         let compass_correction: f64 = Self::compass_correction(compass_direction)?;
 
-        Ok(Longitude {
-            value: decimal_degrees * compass_correction,
-        })
+        Ok(Longitude(decimal_degrees * compass_correction))
     }
 
     fn parse_compass_direction(longitude: &str) -> Result<char> {
@@ -203,10 +207,6 @@ impl Coordinate for Longitude {
             )),
         }
     }
-
-    fn to_radians(&self) -> f64 {
-        self.value.to_radians()
-    }
 }
 
 impl Coordinates {
@@ -237,10 +237,7 @@ mod tests {
         ];
 
         for (expected, arg) in params.iter() {
-            assert_eq!(
-                *expected,
-                Latitude::from_decimal_degrees(*arg).unwrap().value
-            )
+            assert_eq!(*expected, Latitude::from_decimal_degrees(*arg).unwrap().0)
         }
     }
     #[test]
@@ -256,10 +253,66 @@ mod tests {
         ];
 
         for (expected, arg) in params.iter() {
-            assert_eq!(
-                *expected,
-                Longitude::from_decimal_degrees(*arg).unwrap().value
-            )
+            assert_eq!(*expected, Longitude::from_decimal_degrees(*arg).unwrap().0)
         }
+    }
+
+    #[test]
+    fn test_serialize_event_time() {
+        let dt = DateTime::parse_from_rfc3339("2022-06-11T12:00:00+01:00").unwrap();
+        let et = EventTime::new(Some(dt));
+        // serialize to rfc3339
+        let expected = serde_json::json!("2022-06-11T12:00:00+01:00");
+        assert_eq!(serde_json::to_value(et).unwrap(), expected);
+
+        let et = EventTime::new(None);
+        //serialize to null
+        let expected = serde_json::json!(null);
+        assert_eq!(serde_json::to_value(et).unwrap(), expected);
+    }
+
+    #[test]
+    fn test_display_event_time() {
+        let dt = DateTime::parse_from_rfc3339("2022-06-11T12:00:00+01:00").unwrap();
+        let et = EventTime::new(Some(dt));
+        let expected = "2022-06-11 12:00:00 +01:00";
+        assert_eq!(et.to_string(), expected);
+
+        let et = EventTime::new(None);
+        let expected = "Never";
+        assert_eq!(et.to_string(), expected);
+    }
+
+    #[test]
+    fn test_serialize_coordinates() {
+        // coordinates are serialized to decimal degree notation
+        let coord = Coordinates {
+            latitude: Latitude(51.1),
+            longitude: Longitude(3.56),
+        };
+        let expected = serde_json::json!({"latitude": 51.1, "longitude": 3.56});
+        assert_eq!(serde_json::to_value(coord).unwrap(), expected);
+    }
+
+    #[test]
+    fn test_display_latitude() {
+        let lat = Latitude(51.1);
+        let expected = "51.1000N";
+        assert_eq!(lat.to_string(), expected);
+
+        let lat = Latitude(-51.1);
+        let expected = "51.1000S";
+        assert_eq!(lat.to_string(), expected);
+    }
+
+    #[test]
+    fn test_display_longitude() {
+        let lon = Longitude(51.1);
+        let expected = "51.1000E";
+        assert_eq!(lon.to_string(), expected);
+
+        let lon = Longitude(-51.1);
+        let expected = "51.1000W";
+        assert_eq!(lon.to_string(), expected);
     }
 }

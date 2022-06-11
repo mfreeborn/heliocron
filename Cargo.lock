@@ -213,6 +213,7 @@ dependencies = [
  "dirs",
  "predicates",
  "serde",
+ "serde_json",
  "structopt",
  "tokio",
  "tokio-walltime",
