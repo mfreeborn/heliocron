@@ -6,9 +6,14 @@ use super::{calc, enums, errors, report, utils};
 
 type Result<T> = result::Result<T, errors::HeliocronError>;
 
-pub fn display_report(solar_calculations: calc::SolarCalculations) -> Result<()> {
+pub fn display_report(solar_calculations: calc::SolarCalculations, json: bool) -> Result<()> {
     let report = report::SolarReport::new(solar_calculations);
-    println!("{}", report);
+    let output = if json {
+        serde_json::to_string(&report).unwrap()
+    } else {
+        report.to_string()
+    };
+    println!("{}", output);
     Ok(())
 }
 

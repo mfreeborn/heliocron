@@ -87,6 +87,38 @@ fn test_report_custom_timezone() {
     assert_report(report_short);
 }
 
+#[test]
+fn test_report_json_output() {
+    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+
+    // parse the output into a Json Value
+    let json_output: serde_json::Value = serde_json::from_str(
+        &String::from_utf8(
+            cmd.args(&["report", "--json"])
+                .assert()
+                .success()
+                .get_output()
+                .stdout
+                .clone(),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+
+    let expected = serde_json::json!({
+        "location": {"latitude": 51.4000, "longitude": -5.4670},
+        "date": "2022-06-11T12:00:00+01:00",
+        "day_length": 59534,
+        "solar_noon": "2022-06-11T13:21:31+01:00",
+        "sunrise": "2022-06-11T05:05:24+01:00",
+        "sunset": "2022-06-11T21:37:38+01:00",
+        "dawn": {"civil": "2022-06-11T04:18:29+01:00", "nautical": "2022-06-11T03:06:40+01:00", "astronomical": null},
+        "dusk": {"civil": "2022-06-11T22:24:34+01:00", "nautical": "2022-06-11T23:36:23+01:00", "astronomical": null},
+    });
+
+    assert_eq!(json_output, expected);
+}
+
 fn assert_report(report: Assert) {
     report
         .success()
