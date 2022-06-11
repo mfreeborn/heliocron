@@ -24,8 +24,8 @@ jobs:
     - name: Publish to crates.io
       run: cargo publish --allow-dirty
 
-  initialize-gh-release:
-    name: initialize-gh-release
+  initialise-gh-release:
+    name: initialise-gh-release
     runs-on: ubuntu-latest
     steps:
       - name: Get the release version from the tag
@@ -46,7 +46,7 @@ jobs:
           path: release-version
 
   build-release:
-    needs: [initialize-gh-release]
+    needs: [initialise-gh-release]
     uses: ./.github/workflows/build_releases.yml
 
   upload-release:

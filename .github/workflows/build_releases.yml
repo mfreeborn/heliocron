@@ -33,13 +33,11 @@ jobs:
               cross: true,
             }
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
-      - name: Set up Rust toolchain
-        uses: actions-rs/toolchain@v1
+      - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
@@ -60,14 +58,9 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          staging="heliocron-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
-          mkdir -p "$staging"/
-
-          cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
-          cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
-
-          tar czf "$staging.tar.gz" "$staging"
-          echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+          cp target/${{ matrix.info.target }}/release/heliocron ./heliocron
+          tar -czvf "heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.info.target }}.tar.gz" heliocron README.md LICENSE-APACHE LICENSE-MIT
+          echo "ASSET=heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
 
       - name: Create release directory for artifact, move file
         shell: bash
