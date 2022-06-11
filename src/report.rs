@@ -197,7 +197,7 @@ mod tests {
         let sunset_str = format!("{}", report.sunset);
         assert!(report_str.contains(&sunset_str));
 
-        let day_length_str = format!("{}", SolarReport::day_length_hms(report.day_length));
+        let day_length_str = SolarReport::day_length_hms(report.day_length);
         assert!(report_str.contains(&day_length_str));
     }
 
