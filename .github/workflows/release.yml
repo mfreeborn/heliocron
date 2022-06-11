@@ -46,7 +46,7 @@ jobs:
           path: release-version
 
   build-release:
-    needs: [initialize-release-job]
+    needs: [initialize-gh-release]
     uses: ./.github/workflows/build_releases.yml
 
   upload-release:
@@ -92,10 +92,5 @@ jobs:
           name: ${{ env.RELEASE_VERSION }} Release
           body: |
             <!-- Write summary here -->
-            ---
-            ## Features
-            ## Changes
-            ## Bug Fixes
-            ## Internal Changes
           files: |
             ./release/*
