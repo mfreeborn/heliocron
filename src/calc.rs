@@ -1,8 +1,7 @@
-use super::{enums, structs};
-
 use chrono::{DateTime, Duration, FixedOffset, NaiveTime, Offset, Timelike};
 
 use super::traits::{DateTimeExt, NaiveTimeExt};
+use super::{enums, structs};
 
 #[derive(Debug, Clone)]
 struct SolarCalculationsRow {

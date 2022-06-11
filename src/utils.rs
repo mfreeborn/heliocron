@@ -1,10 +1,9 @@
 use std::result;
 
 use chrono::{DateTime, FixedOffset, Local, TimeZone};
+use tokio_walltime;
 
 use super::errors::{HeliocronError, RuntimeErrorKind};
-
-use tokio_walltime;
 
 type Result<T> = result::Result<T, HeliocronError>;
 

@@ -84,8 +84,9 @@ pub fn parse_altitude(altitude: String) -> Result<f64> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use chrono::Timelike;
+
+    use super::*;
 
     #[test]
     fn test_parse_altitude() {

@@ -1,7 +1,7 @@
 use std::error::Error;
-use tokio_walltime;
 
 use chrono;
+use tokio_walltime;
 
 #[derive(Debug)]
 pub enum HeliocronError {
