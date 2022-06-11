@@ -1,5 +1,4 @@
 name: "Build Releases"
-
 on:
   workflow_call:
 
