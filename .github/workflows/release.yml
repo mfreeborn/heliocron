@@ -1,4 +1,4 @@
-name: release
+name: Deploy Releases
 on:
   push:
     tags:
@@ -7,10 +7,13 @@ on:
 jobs:
   create-crates-io-release:
     name: create-crates-io-release
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v1
+    - uses: actions/checkout@v3
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
 
     - name: Log in to crates.io
       run: cargo login ${{ env.CRATES_IO_TOKEN }}
@@ -20,116 +23,78 @@ jobs:
     - name: Publish to crates.io
       run: cargo publish --allow-dirty
 
-  create-gh-releases-release:
-    name: create-gh-releases-release
-    runs-on: ubuntu-18.04
-    env:
-      VERSION:
+  initialize-gh-release:
+    name: initialize-gh-release
+    runs-on: ubuntu-latest
     steps:
-      - name: Get the version
+      - name: Get the release version from the tag
+        if: env.VERSION == ''
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Create artifacts directory
-        run: mkdir artifacts
-
-      - name: Create GitHub release
-        id: release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-
-      - name: Save release upload URL to artifact
-        run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
+      - name: Validate version environment variable
+        run: echo "Version being built against is ${{ env.VERSION }}"!
 
       - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > artifacts/release-version
+        run: echo "${{ env.VERSION }}" > release-version
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+      - name: Upload release-version as artifact
+        uses: actions/upload-artifact@v2
         with:
-          name: artifacts
-          path: artifacts
+          retention-days: 3
+          name: release-version
+          path: release-version
 
-  build-gh-releases-release:
-    name: build-gh-releases-release
-    needs: ["create-gh-releases-release"]
-    runs-on: ubuntu-18.04
-    env:
-      CARGO: cargo
-      # when CARGO is set to CROSS, this is set to `--target matrix.target`
-      TARGET_FLAGS:
-      # when CARGO is set to CROSS, TARGET_DIR includes matrix.target
-      TARGET_DIR: ./target
-    strategy:
-      matrix:
-        # we will build for x86_64 linux (desktop), armv6 (RPi 0/1) and armv7 (RPi2/3/4)
-        build: [linux, linux-armv7, linux-armv6]
-        include:
-        - build: linux
-          target: x86_64-unknown-linux-gnu
-        - build: linux-armv7
-          target: armv7-unknown-linux-gnueabihf
-        - build: linux-armv6
-          target: arm-unknown-linux-gnueabihf
+  build-release:
+    needs: [initialize-release-job]
+    uses: ./.github/workflows/build_releases.yml
+
+  upload-release:
+    name: upload-release
+    runs-on: ubuntu-latest
+    needs: [build-release]
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-    
-    - name: Install latest stable Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        profile: minimal
-        override: true
-        target: ${{ matrix.target }}
-    
-    - name: Use Cross
-      run: |
-        cargo install cross --git https://github.com/cross-rs/cross
-        echo "CARGO=cross" >> $GITHUB_ENV
-        echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
-        echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
+      - name: Get release version
+        uses: actions/download-artifact@v3
+        with:
+          name: release-version
+          path: release-version
 
-    - name: Get release download URL
-      uses: actions/download-artifact@v1
-      with:
-        name: artifacts
-        path: artifacts
+      - name: Set release version
+        shell: bash
+        run: |
+          release_version="$(cat ./release-version/release-version)"
+          echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
-    - name: Set release upload URL and release version
-      shell: bash
-      run: |
-        release_upload_url="$(cat artifacts/release-upload-url)"
-        echo "RELEASE_UPLOAD_URL=$release_upload_url" >> $GITHUB_ENV
-        echo "release upload url: $RELEASE_UPLOAD_URL"
-        release_version="$(cat artifacts/release-version)"
-        echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
-        echo "release version: $RELEASE_VERSION"
-    
-    - name: Build release binary
-      run: ${{ env.CARGO }} build --verbose --release ${{ env.TARGET_FLAGS }}
+      - name: Validate release version
+        run: |
+          echo "Release version: ${{ env.RELEASE_VERSION }}"
 
-    - name: Build archive
-      shell: bash
-      run: |
-        staging="heliocron-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
-        mkdir -p "$staging"/
+      - name: Get release artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: release
+          path: release
 
-        cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
-        cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
+      - name: Print out all release files
+        run: |
+          echo "Generated $(ls ./release | wc -l) files:"
+          du -h -d 0 ./release/*
 
-        tar czf "$staging.tar.gz" "$staging"
-        echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
-    
-    - name: Upload release archive
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-        asset_path: ${{ env.ASSET }}
-        asset_name: ${{ env.ASSET }}
-        asset_content_type: application/octet-stream
+      - name: Upload all saved release files
+        uses: softprops/action-gh-release@17cd0d34deddf848fc0e7d9be5202c148c270a0a # 0.1.14
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          tag_name: ${{ env.RELEASE_VERSION }}
+          draft: true
+          fail_on_unmatched_files: true
+          name: ${{ env.RELEASE_VERSION }} Release
+          body: |
+            <!-- Write summary here -->
+            ---
+            ## Features
+            ## Changes
+            ## Bug Fixes
+            ## Internal Changes
+          files: |
+            ./release/*
