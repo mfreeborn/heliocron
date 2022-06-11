@@ -263,11 +263,11 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     $ heliocron report --json  # note that I have annotated and prettified the output in this example to more clearly show the structure
     {
       "date": "2022-06-11T12:00:00+01:00",  # dates are formatted as rfc3339
-      "location": {"latitude": 51.4,"longitude": -5.467},  # coordinates use decimal degree notation 
+      "location": {"latitude": 51.4, "longitude": -5.467},  # coordinates use decimal degree notation 
       "day_length": 59534,  # day length is an unsigned integer number of seconds
       "solar_noon": "2022-06-11T13:21:31+01:00",
       "sunrise": "2022-06-11T05:05:24+01:00",
-      "sunset":"2022-06-11T21:37:38+01:00",
+      "sunset": "2022-06-11T21:37:38+01:00",
       "dawn": {
         "civil": "2022-06-11T04:18:29+01:00",
         "nautical": "2022-06-11T03:06:40+01:00",
