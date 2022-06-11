@@ -6,8 +6,9 @@ async fn run_heliocron() -> Result<(), errors::HeliocronError> {
     // here, we simply take a fully parsed Config and perform the selected action
     let config = config::parse_config()?;
     let solar_calculations = calc::SolarCalculations::new(config.date, config.coordinates);
+
     match config.action {
-        config::Action::Report => subcommands::display_report(solar_calculations)?,
+        config::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
         config::Action::Wait {
             event,
             offset,

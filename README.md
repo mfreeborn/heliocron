@@ -254,7 +254,32 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
   Output the dates and times of sunrise, sunset, etc to stdout on the specified date at the specified location.
 
-  No further options are available.
+  * `--json` [optional]
+
+    When set, the report will be printed in JSON format, enabling other programs to easily parse the output. If absent, the report is presented in a human-readable format, as displayed in the [usage examples](#usage-examples) above.
+
+    Example:
+    ```bash
+    $ heliocron report --json  # note that I have annotated and prettified the output in this example to more clearly show the structure
+    {
+      "date": "2022-06-11T12:00:00+01:00",  # dates are formatted as rfc3339
+      "location": {"latitude": 51.4, "longitude": -5.467},  # coordinates use decimal degree notation 
+      "day_length": 59534,  # day length is an unsigned integer number of seconds
+      "solar_noon": "2022-06-11T13:21:31+01:00",
+      "sunrise": "2022-06-11T05:05:24+01:00",
+      "sunset": "2022-06-11T21:37:38+01:00",
+      "dawn": {
+        "civil": "2022-06-11T04:18:29+01:00",
+        "nautical": "2022-06-11T03:06:40+01:00",
+        "astronomical": null  # missing dates use the `null` JSON value
+      },
+      "dusk": {
+        "civil": "2022-06-11T22:24:34+01:00",
+        "nautical": "2022-06-11T23:36:23+01:00",
+        "astronomical": null
+      }
+    }
+    ```
 
 * #### wait
 

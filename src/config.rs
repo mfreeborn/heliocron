@@ -51,7 +51,13 @@ struct Cli {
 
 #[derive(Debug, StructOpt)]
 pub enum Subcommand {
-    Report {},
+    Report {
+        #[structopt(
+            help = "Set the output format to machine-readable JSON. If this flag is not present, the report will be displayed in the terminal as a block of human-readable text.",
+            long = "json"
+        )]
+        json: bool,
+    },
 
     Wait {
         #[structopt(
@@ -131,7 +137,9 @@ impl TomlConfig {
 
 #[derive(Debug, Clone)]
 pub enum Action {
-    Report,
+    Report {
+        json: bool,
+    },
     Wait {
         event: enums::Event,
         offset: Duration,
@@ -190,7 +198,7 @@ impl Config {
                     run_missed_task,
                 }
             }
-            Subcommand::Report {} => Action::Report,
+            Subcommand::Report { json } => Action::Report { json },
         };
 
         Ok(self)
@@ -207,7 +215,7 @@ pub fn parse_config() -> Result<Config> {
             .and_hms(12, 0, 0)
             .with_timezone(&FixedOffset::from_offset(Local::today().offset())),
         // action will always get overwritten by the action provided later on from the CLI args
-        action: Action::Report,
+        action: Action::Report { json: false },
     };
 
     // 1. Overwrite defaults with config from ~/.config/heliocron.toml if present
