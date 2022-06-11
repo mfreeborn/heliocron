@@ -28,7 +28,7 @@ serde = {version = "1.0", features = ["derive"]}
 serde_json = "1.0"
 structopt = "0.3"
 tokio = { version = "1", features = ["full"] }
-tokio-walltime =  "0.1.1"
+tokio-walltime =  "0.1.2"
 toml = "0.5"
 
 [dev-dependencies]
