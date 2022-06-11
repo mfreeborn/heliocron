@@ -1,18 +1,20 @@
 name: "Build Releases"
+
 on:
   workflow_call:
 
 env:
   CARGO_INCREMENTAL: 0
+  CARGO_PROFILE_DEV_DEBUG: 0
 
 jobs:
-  build-binaries:
+  build:
     name: "Build binaries"
     runs-on: ${{ matrix.info.os }}
     env:
       RUST_BACKTRACE: 1
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         info:
           - {
@@ -55,17 +57,17 @@ jobs:
           args: --release --verbose --locked --target=${{ matrix.info.target }}
           use-cross: ${{ matrix.info.cross }}
 
-    - name: Build archive
-      shell: bash
-      run: |
-        staging="heliocron-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
-        mkdir -p "$staging"/
+      - name: Build archive
+        shell: bash
+        run: |
+          staging="heliocron-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+          mkdir -p "$staging"/
 
-        cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
-        cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
+          cp {README.md,LICENSE-APACHE,LICENSE-MIT} "$staging/"
+          cp "target/${{ matrix.target }}/release/heliocron" "$staging/"
 
-        tar czf "$staging.tar.gz" "$staging"
-        echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+          tar czf "$staging.tar.gz" "$staging"
+          echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
 
       - name: Create release directory for artifact, move file
         shell: bash
