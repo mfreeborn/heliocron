@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.7.0] - 2022-xx-xx
 ### Fixed
-- Fixed handling of time zones so that they are now implemented properly.
+- Fixed handling of time zones so that they are now implemented properly ([#41](https://github.com/mfreeborn/heliocron/issues/41)).
 
 ### Removed
 - `--date-format` flag has been removed as it adds additional complexity when validating command line args for no real benefit.
