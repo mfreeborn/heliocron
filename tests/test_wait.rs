@@ -93,7 +93,7 @@ fn test_wait_custom_altitude_range() {
         .assert()
         .failure()
         .stderr(predicates::str::contains(
-            "Must be a number which is <= 90.0 and >= -90.0",
+            "Expected a number between -90.0 and 90.0",
         ));
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
@@ -109,7 +109,7 @@ fn test_wait_custom_altitude_range() {
         .assert()
         .failure()
         .stderr(predicates::str::contains(
-            "Must be a number which is <= 90.0 and >= -90.0",
+            "Expected a number between -90.0 and 90.0",
         ));
 }
 
@@ -128,7 +128,7 @@ fn test_custom_altitude_must_be_float() {
     .assert()
     .failure()
     .stderr(predicates::str::contains(
-        "Must be a number which is <= 90.0 and >= -90.0",
+        "Expected a number between -90.0 and 90.0",
     ));
 }
 
@@ -334,7 +334,9 @@ fn test_offset_parse_error() {
     ])
     .assert()
     .failure()
-    .stderr(predicates::str::contains("in the format HH:MM:SS or HH:MM"));
+    .stderr(predicates::str::contains(
+        "Expected an offset in the format '[-]HH:MM' or '[-]HH:MM:SS",
+    ));
 }
 
 #[test]
