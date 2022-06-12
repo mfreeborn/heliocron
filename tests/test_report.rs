@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 fn test_plain_bin() {
     // assert that running the binary with no flags doesn't simply fail
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    cmd.assert().code(1);
+    cmd.assert().code(2);
 }
 
 #[test]
@@ -19,9 +19,8 @@ fn test_help() {
 
     help.success()
         .stdout(predicates::str::contains("heliocron"))
-        .stdout(predicates::str::contains("A simple utility for"))
+        .stdout(predicates::str::contains("A utility"))
         .stdout(predicates::str::contains("USAGE"))
-        .stdout(predicates::str::contains("FLAGS"))
         .stdout(predicates::str::contains("OPTIONS"));
 }
 

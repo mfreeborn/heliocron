@@ -30,7 +30,7 @@ impl ConfigErrorKind {
                 "Error parsing date. Ensure the date is formatted correctly."
             }
             ConfigErrorKind::ParseAltitude => {
-                "Error parsing altitude. Must be a number which is <= 90.0 and >= -90.0."
+                "Error parsing altitude. Must be a number between -90.0 and 90.0."
             }
             ConfigErrorKind::ParseOffset => {
                 "Error parsing offset. Expected a string in the format HH:MM:SS or HH:MM."

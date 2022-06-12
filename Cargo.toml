@@ -3,7 +3,7 @@ name = "heliocron"
 version = "0.6.1"
 authors = ["Michael Freeborn <michaelfreeborn1@gmail.com>"]
 description = """
-Heliocron is a command line application written in Rust capable of delaying execution of other 
+heliocron is a command line application written in Rust capable of delaying execution of other 
 programs for time periods relative to sunrise and sunset.
 """
 documentation = "https://github.com/mfreeborn/heliocron"
@@ -24,9 +24,9 @@ integration-test = []
 [dependencies]
 chrono = "0.4"
 dirs = "2.0"
-serde = {version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-structopt = "0.3"
+clap = { version = "3.1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 tokio-walltime =  "0.1.2"
 toml = "0.5"
