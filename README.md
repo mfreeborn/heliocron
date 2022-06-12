@@ -63,7 +63,7 @@ heliocron 0.6.1
 The following code snippet entered into the terminal will wait until sunset on 25th Feb 2020 at the Royal Greenwich Observatory (17:32:17 +00:00)  before listing the files and folders contained within the user's home directory.
 
 ```bash
-$ heliocron --date 2020-02-25 --date-format %Y-%m-%d --latitude 51.4769N --longitude 0.0005W \
+$ heliocron --date 2020-02-25 --latitude 51.4769N --longitude 0.0005W \
 wait --event sunset && ls ~
 Thread going to sleep for _ seconds until 2020-02-25 17:32:17 +00:00. Press ctrl+C to cancel.
 ```
@@ -80,7 +80,7 @@ Integration with `cron` for recurring tasks is easy. The following snippet shows
 Ever wondered what time sunrise is in Edinburgh on 7th May 2065?
 
 ```bash
-$ heliocron -d "7 May 2065" -f "%e %B %Y" -l 55.9533N -o 3.1883W report
+$ heliocron -d 2065-05-07 -l 55.9533N -o 3.1883W report
 LOCATION
 --------
 Latitude:  55.9533N
@@ -222,11 +222,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
 * `-d, --date` [default: today]
 
-  Specify the date, by default in ISO 8601 format (YYYY-MM-DD).
-
-* `-f, --format` [default: %Y-%m-%d]
-
-  Specify the format of the date string passed to `--date`, using the syntax described [here](https://docs.rs/chrono/0.4.12/chrono/format/strftime/index.html) by the `chrono` crate.
+  Specify the date in ISO 8601 format (YYYY-MM-DD).
 
 * `-l, --latitude` [default: 51.4769N]
 
