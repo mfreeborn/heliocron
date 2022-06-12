@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, FixedOffset, NaiveTime, Offset, Timelike};
+use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 
 use super::traits::{DateTimeExt, NaiveTimeExt};
 use super::{enums, structs};
@@ -11,11 +11,8 @@ struct SolarCalculationsRow {
 }
 
 impl SolarCalculationsRow {
-    pub fn new(
-        date: DateTime<FixedOffset>,
-        coordinates: structs::Coordinates,
-    ) -> SolarCalculationsRow {
-        let time_zone = date.offset().fix().local_minus_utc() as f64 / 3600.0;
+    pub fn new(date: NaiveDateTime, coordinates: structs::Coordinates) -> SolarCalculationsRow {
+        let time_zone = 0.;
         let julian_date: f64 = date.to_julian_date();
 
         let julian_century = (julian_date - 2451545.0) / 36525.0;
@@ -124,11 +121,9 @@ impl SolarCalculationsRow {
 
 #[derive(Debug, Clone)]
 pub struct SolarCalculations {
-    // required parameters
     pub date: DateTime<FixedOffset>,
     pub coordinates: structs::Coordinates,
 
-    // calculated fields
     midday_calculations: SolarCalculationsRow,
 }
 
@@ -137,8 +132,10 @@ impl SolarCalculations {
         date: DateTime<FixedOffset>,
         coordinates: structs::Coordinates,
     ) -> SolarCalculations {
-        // calculate the necessary values for midday
-        let midday_calculations = SolarCalculationsRow::new(date, coordinates);
+        // Using `naive_local()` gives us the correct date when the offset would push the date
+        // either one day ahead or one day before.
+        let local_date = date.naive_local();
+        let midday_calculations = SolarCalculationsRow::new(local_date, coordinates);
 
         SolarCalculations {
             date,
@@ -156,14 +153,12 @@ impl SolarCalculations {
     }
 
     fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
-        let mut date = self.date;
-
-        // correct the date if the event rolls over to the next day, or happens on the previous day
+        let mut date = self.date.naive_local();
         if day_fraction < 0.0 {
-            date = date - Duration::days(1);
+            date -= Duration::days(1);
             day_fraction = day_fraction.abs();
         } else if day_fraction >= 1.0 {
-            date = date + Duration::days(1);
+            date += Duration::days(1);
             day_fraction -= 1.0;
         }
 
@@ -177,12 +172,20 @@ impl SolarCalculations {
             second_fraction.trunc() as u32,
         );
 
-        date.with_hour(time.hour())
-            .unwrap()
-            .with_minute(time.minute())
-            .unwrap()
-            .with_second(time.second())
-            .unwrap()
+        // Creating the datetime using the UTC offset, before updating the timezone to the one set by
+        // the user, is necessary so that the calculations and timezones all match up.
+        // These are all safe to unwrap because we are taking the values from a valid NaiveTime.
+        Utc.from_local_datetime(
+            &date
+                .with_hour(time.hour())
+                .unwrap()
+                .with_minute(time.minute())
+                .unwrap()
+                .with_second(time.second())
+                .unwrap(),
+        )
+        .unwrap()
+        .with_timezone(self.date.offset())
     }
 
     fn calculate_hour_angle(&self, degrees_below_horizon: f64) -> Option<f64> {
@@ -283,25 +286,27 @@ impl SolarCalculations {
         let sunrise = self.calculate_event_time(enums::Event::new("sunrise", None).unwrap());
         let sunset = self.calculate_event_time(enums::Event::new("sunset", None).unwrap());
 
-        if sunrise.is_some() & sunset.is_some() {
-            // sunrise does actually occur, so it is just sunet - sunrise
-            sunset.datetime.unwrap() - sunrise.datetime.unwrap()
-        } else {
-            // there is no sunrise, so we need to work out whether the sun was above the sunrise angle
-            // at solar noon or not
-            if self.calculate_max_solar_elevation() >= 0.833 {
-                Duration::hours(24)
-            } else {
-                Duration::hours(0)
+        match (sunrise.datetime, sunset.datetime) {
+            (Some(sunrise), Some(sunset)) => sunset - sunrise,
+            _ => {
+                let max_solar_elevation = self.calculate_max_solar_elevation();
+                // There is no sunrise/sunset, and Sun reaches the defintion for sunrise (0.833 degrees above
+                // horizon), therefore it must never set.
+                if max_solar_elevation >= 0.833 {
+                    Duration::hours(24)
+                } else {
+                    Duration::hours(0)
+                }
             }
         }
     }
 
+    /// Returns the solar elevation angle when the solar azimuth is at 180 degrees in the north or 0 degrees in
+    /// the south, corrected for atmospheric refraction.
     fn calculate_max_solar_elevation(&self) -> f64 {
-        // need to get the corrected solar elevation angle at solar noon
-        // we can unwrap solar noon safely, because solar noon always occurs for a given day
-        SolarCalculationsRow::new(self.get_solar_noon().datetime.unwrap(), self.coordinates)
-            .corrected_solar_elevation_angle
+        // Safe to unwrap as there is always a solar noon.
+        let date = self.get_solar_noon().datetime.unwrap().naive_utc();
+        SolarCalculationsRow::new(date, self.coordinates).corrected_solar_elevation_angle
     }
 }
 

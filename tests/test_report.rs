@@ -2,6 +2,7 @@ use std::process::Command;
 
 use assert_cmd::assert::Assert;
 use assert_cmd::prelude::*;
+use pretty_assertions::assert_eq;
 
 #[test]
 fn test_plain_bin() {
@@ -50,30 +51,6 @@ fn test_report_custom_location() {
 }
 
 #[test]
-fn test_report_custom_date() {
-    // assert that a report is successfully generated when an arbitrary date is given
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_long = cmd
-        .args(&[
-            "--date",
-            "2020-03-15",
-            "--date-format",
-            "%Y-%m-%d",
-            "report",
-        ])
-        .assert();
-
-    assert_report(report_long);
-
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_short = cmd
-        .args(&["-d", "2020-25-01", "-f", "%Y-%d-%m", "report"])
-        .assert();
-
-    assert_report(report_short);
-}
-
-#[test]
 fn test_report_custom_timezone() {
     // assert that a report is successfully generated when an arbitrary time zone is given
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
@@ -117,14 +94,14 @@ fn test_report_json_output() {
     .unwrap();
 
     let expected = serde_json::json!({
-        "location": {"latitude": 51.4, "longitude": -5.467},
+        "location": {"latitude": 51.4000, "longitude": -5.4670},
         "date": "2022-06-11T12:00:00+01:00",
-        "day_length": 59534,
-        "solar_noon": "2022-06-11T13:21:31+01:00",
-        "sunrise": "2022-06-11T05:05:24+01:00",
-        "sunset": "2022-06-11T21:37:38+01:00",
-        "dawn": {"civil": "2022-06-11T04:18:29+01:00", "nautical": "2022-06-11T03:06:40+01:00", "astronomical": null},
-        "dusk": {"civil": "2022-06-11T22:24:34+01:00", "nautical": "2022-06-11T23:36:23+01:00", "astronomical": null},
+        "day_length": 59537,
+        "solar_noon": "2022-06-11T13:21:32+01:00",
+        "sunrise": "2022-06-11T05:05:23+01:00",
+        "sunset": "2022-06-11T21:37:40+01:00",
+        "dawn": {"civil": "2022-06-11T04:18:28+01:00", "nautical": "2022-06-11T03:06:38+01:00", "astronomical": null},
+        "dusk": {"civil": "2022-06-11T22:24:36+01:00", "nautical": "2022-06-11T23:36:26+01:00", "astronomical": null},
     });
 
     assert_eq!(json_output, expected);

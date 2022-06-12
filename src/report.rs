@@ -148,6 +148,8 @@ impl SolarReport {
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+
     use super::*;
     use crate::structs;
 
@@ -202,6 +204,7 @@ mod tests {
     }
 
     #[test]
+    #[rustfmt::skip]
     fn test_sunrise_sunset() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         // ~Springtime
@@ -219,14 +222,8 @@ mod tests {
         assert_eq!("19:14:23", report.civil_dusk.time().unwrap().to_string());
         assert_eq!("04:37:42", report.nautical_dawn.time().unwrap().to_string());
         assert_eq!("19:59:24", report.nautical_dusk.time().unwrap().to_string());
-        assert_eq!(
-            "03:49:09",
-            report.astronomical_dawn.time().unwrap().to_string()
-        );
-        assert_eq!(
-            "20:47:57",
-            report.astronomical_dusk.time().unwrap().to_string()
-        );
+        assert_eq!("03:49:09", report.astronomical_dawn.time().unwrap().to_string());
+        assert_eq!("20:47:57", report.astronomical_dusk.time().unwrap().to_string());
 
         // mid-summer (there is no true night; it stays astronomical twilight)
         let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+01:00").unwrap();
@@ -239,8 +236,8 @@ mod tests {
         assert_eq!("04:26:26", report.sunrise.time().unwrap().to_string());
         assert_eq!("22:02:52", report.sunset.time().unwrap().to_string());
         assert_eq!("13:14:39", report.solar_noon.time().unwrap().to_string());
-        assert_eq!("03:23:57", report.civil_dawn.time().unwrap().to_string());
-        assert_eq!("23:05:20", report.civil_dusk.time().unwrap().to_string());
+        assert_eq!("03:23:58", report.civil_dawn.time().unwrap().to_string());
+        assert_eq!("23:05:21", report.civil_dusk.time().unwrap().to_string());
         assert_eq!(None, report.nautical_dawn.datetime);
         assert_eq!("Never".to_string(), format!("{}", report.nautical_dawn));
         assert_eq!(None, report.nautical_dusk.datetime);
@@ -258,21 +255,15 @@ mod tests {
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
 
-        assert_eq!("06:47:03", report.sunrise.time().unwrap().to_string());
-        assert_eq!("19:47:03", report.sunset.time().unwrap().to_string());
+        assert_eq!("06:46:57", report.sunrise.time().unwrap().to_string());
+        assert_eq!("19:47:09", report.sunset.time().unwrap().to_string());
         assert_eq!("13:17:03", report.solar_noon.time().unwrap().to_string());
-        assert_eq!("06:09:13", report.civil_dawn.time().unwrap().to_string());
-        assert_eq!("20:24:53", report.civil_dusk.time().unwrap().to_string());
-        assert_eq!("05:23:09", report.nautical_dawn.time().unwrap().to_string());
-        assert_eq!("21:10:57", report.nautical_dusk.time().unwrap().to_string());
-        assert_eq!(
-            "04:32:31",
-            report.astronomical_dawn.time().unwrap().to_string()
-        );
-        assert_eq!(
-            "22:01:36",
-            report.astronomical_dusk.time().unwrap().to_string()
-        );
+        assert_eq!("06:09:06", report.civil_dawn.time().unwrap().to_string());
+        assert_eq!("20:24:59", report.civil_dusk.time().unwrap().to_string());
+        assert_eq!("05:23:02", report.nautical_dawn.time().unwrap().to_string());
+        assert_eq!("21:11:03", report.nautical_dusk.time().unwrap().to_string());
+        assert_eq!("04:32:22", report.astronomical_dawn.time().unwrap().to_string());
+        assert_eq!("22:01:43", report.astronomical_dusk.time().unwrap().to_string());
 
         // at an extreme longitude with a very non-local timezone
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
@@ -281,39 +272,15 @@ mod tests {
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
 
-        assert_eq!(
-            "2020-03-25 17:23:21 +00:00",
-            report.sunrise.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-26 06:00:14 +00:00",
-            report.sunset.datetime.unwrap().to_string()
-        );
+        assert_eq!("2020-03-25 17:23:21 +00:00", report.sunrise.datetime.unwrap().to_string());
+        assert_eq!("2020-03-26 06:00:14 +00:00", report.sunset.datetime.unwrap().to_string());
         assert_eq!("2020-03-25 23:41:48 +00:00", report.solar_noon.to_string());
-        assert_eq!(
-            "2020-03-25 16:45:58 +00:00",
-            report.civil_dawn.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-26 06:37:37 +00:00",
-            report.civil_dusk.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-25 16:00:57 +00:00",
-            report.nautical_dawn.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-26 07:22:39 +00:00",
-            report.nautical_dusk.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-25 15:12:24 +00:00",
-            report.astronomical_dawn.datetime.unwrap().to_string()
-        );
-        assert_eq!(
-            "2020-03-26 08:11:12 +00:00",
-            report.astronomical_dusk.datetime.unwrap().to_string()
-        );
+        assert_eq!("2020-03-25 16:45:58 +00:00", report.civil_dawn.datetime.unwrap().to_string());
+        assert_eq!("2020-03-26 06:37:37 +00:00", report.civil_dusk.datetime.unwrap().to_string());
+        assert_eq!("2020-03-25 16:00:57 +00:00", report.nautical_dawn.datetime.unwrap().to_string());
+        assert_eq!("2020-03-26 07:22:39 +00:00", report.nautical_dusk.datetime.unwrap().to_string());
+        assert_eq!("2020-03-25 15:12:24 +00:00", report.astronomical_dawn.datetime.unwrap().to_string());
+        assert_eq!("2020-03-26 08:11:12 +00:00", report.astronomical_dusk.datetime.unwrap().to_string());
 
         // an extreme northern latitude during the summer
         let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+02:00").unwrap();
@@ -324,7 +291,7 @@ mod tests {
 
         assert_eq!(None, report.sunrise.datetime);
         assert_eq!(None, report.sunset.datetime);
-        assert_eq!("12:59:21", report.solar_noon.time().unwrap().to_string());
+        assert_eq!("12:59:22", report.solar_noon.time().unwrap().to_string());
         assert_eq!(None, report.civil_dawn.datetime);
         assert_eq!(None, report.civil_dusk.datetime);
         assert_eq!(None, report.nautical_dawn.datetime);
@@ -370,12 +337,12 @@ mod tests {
         let expected = serde_json::json!({
             "location": {"latitude": 51.4000, "longitude": -5.4670},
             "date": "2022-06-11T12:00:00+01:00",
-            "day_length": 59534,
-            "solar_noon": "2022-06-11T13:21:31+01:00",
-            "sunrise": "2022-06-11T05:05:24+01:00",
-            "sunset": "2022-06-11T21:37:38+01:00",
-            "dawn": {"civil": "2022-06-11T04:18:29+01:00", "nautical": "2022-06-11T03:06:40+01:00", "astronomical": null},
-            "dusk": {"civil": "2022-06-11T22:24:34+01:00", "nautical": "2022-06-11T23:36:23+01:00", "astronomical": null},
+            "day_length": 59537,
+            "solar_noon": "2022-06-11T13:21:32+01:00",
+            "sunrise": "2022-06-11T05:05:23+01:00",
+            "sunset": "2022-06-11T21:37:40+01:00",
+            "dawn": {"civil": "2022-06-11T04:18:28+01:00", "nautical": "2022-06-11T03:06:38+01:00", "astronomical": null},
+            "dusk": {"civil": "2022-06-11T22:24:36+01:00", "nautical": "2022-06-11T23:36:26+01:00", "astronomical": null},
         });
 
         assert_eq!(serde_json::to_value(report).unwrap(), expected);

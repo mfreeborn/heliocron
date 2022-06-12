@@ -26,7 +26,9 @@ pub(crate) async fn wait(wait_until: DateTime<FixedOffset>) -> Result<()> {
     // the event occurred in the past.
     let duration_to_wait = match duration_to_wait.to_std() {
         Ok(dur) => Ok(dur),
-        Err(_) => Err(HeliocronError::Runtime(RuntimeErrorKind::PastEvent)),
+        Err(_) => Err(HeliocronError::Runtime(RuntimeErrorKind::PastEvent(
+            wait_until,
+        ))),
     }?;
 
     println!(
