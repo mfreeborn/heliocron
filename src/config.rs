@@ -1,6 +1,6 @@
 use std::{fs, path::Path, result};
 
-use chrono::{DateTime, Duration, FixedOffset, Local, NaiveDate, TimeZone, NaiveTime};
+use chrono::{DateTime, Duration, FixedOffset, Local, NaiveDate, NaiveTime, TimeZone};
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
 
@@ -62,7 +62,7 @@ pub enum Commands {
     Wait {
         #[clap(
             help = "Choose an event from which to base your delay.", 
-            short = 'e', 
+            short = 'e',
             long = "event", 
             possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk", "custom_am", "custom_pm", "solar_noon"]
         )]
@@ -103,26 +103,37 @@ pub enum Commands {
 }
 
 fn parse_offset(offset: &str) -> Result<Duration, String> {
-        // offset should either be %H:%M:%S or %H:%M +/- a "-" if negative
-        let (positive, offset): (bool, &str) = match offset.chars().next() {
-            Some('-') => (false, &offset[1..]),
-            _ => (true, offset),
-        };
+    // offset should either be %H:%M:%S or %H:%M +/- a "-" if negative
+    let (positive, offset): (bool, &str) = match offset.chars().next() {
+        Some('-') => (false, &offset[1..]),
+        _ => (true, offset),
+    };
 
-        let pattern = if offset.len() == 5 {"%H:%M"} else {"%H:%M:%S"};
-        let offset = NaiveTime::parse_from_str(offset, pattern).map_err(|_e|"Expected an offset in the format '[-]HH:MM' or '[-]HH:MM:SS'".to_string())?;
-        let offset = offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0));
-    
-        if positive {
-            Ok(offset)
-        } else {
-            Ok(-offset)
-        }
+    let pattern = if offset.len() == 5 {
+        "%H:%M"
+    } else {
+        "%H:%M:%S"
+    };
+    let offset = NaiveTime::parse_from_str(offset, pattern)
+        .map_err(|_e| "Expected an offset in the format '[-]HH:MM' or '[-]HH:MM:SS'".to_string())?;
+    let offset = offset.signed_duration_since(NaiveTime::from_hms(0, 0, 0));
+
+    if positive {
+        Ok(offset)
+    } else {
+        Ok(-offset)
+    }
 }
 
 fn parse_altitude(altitude: &str) -> Result<f64, String> {
-    let altitude = altitude.parse::<f64>().map_err(|_e| "Expected a number between -90.0 and 90.0".to_string())?;
-    if (-90.0..=90.0).contains(&altitude) {Ok(altitude)} else {Err("Expected a number between -90.0 and 90.0".to_string())}
+    let altitude = altitude
+        .parse::<f64>()
+        .map_err(|_e| "Expected a number between -90.0 and 90.0".to_string())?;
+    if (-90.0..=90.0).contains(&altitude) {
+        Ok(altitude)
+    } else {
+        Err("Expected a number between -90.0 and 90.0".to_string())
+    }
 }
 
 #[derive(Debug, Parser, Clone)]
