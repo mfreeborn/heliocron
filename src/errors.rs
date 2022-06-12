@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use chrono;
+use chrono::{self, DateTime, FixedOffset};
 use tokio_walltime;
 
 #[derive(Debug)]
@@ -27,7 +27,7 @@ impl ConfigErrorKind {
                 "Error parsing TOML file. Ensure that it is of the correct format."
             }
             ConfigErrorKind::ParseDate => {
-                "Error parsing date. Ensure the date and timezone formats are correct."
+                "Error parsing date. Ensure the date is formatted correctly."
             }
             ConfigErrorKind::ParseAltitude => {
                 "Error parsing altitude. Must be a number which is <= 90.0 and >= -90.0."
@@ -43,7 +43,7 @@ impl ConfigErrorKind {
 #[derive(Debug)]
 pub enum RuntimeErrorKind {
     NonOccurringEvent,
-    PastEvent,
+    PastEvent(DateTime<FixedOffset>),
     EventMissed(i64),
     SleepError(tokio_walltime::Error),
 }
@@ -70,8 +70,8 @@ impl std::fmt::Display for HeliocronError {
                 match err {
                     RuntimeErrorKind::NonOccurringEvent =>
                         "The chosen event does not occur on this day.".to_string(),
-                    RuntimeErrorKind::PastEvent => {
-                        "The chosen event occurred in the past; cannot wait a negative amount of time.".to_string()
+                    RuntimeErrorKind::PastEvent(when) => {
+                        format!("The chosen event occurred in the past: {when}. Cannot wait a negative amount of time.")
                     }
                     RuntimeErrorKind::EventMissed(by) => format!("Event missed by {}s", by),
                     RuntimeErrorKind::SleepError(e) => e.to_string(),

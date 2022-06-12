@@ -153,7 +153,8 @@ fn test_altitude_ignored_for_non_custom_events() {
     .assert()
     .success()
     .stdout(predicates::str::contains("going to sleep for"))
-    .stdout(predicates::str::contains("until 2099-12-30 08:05:21"));
+    .stdout(predicates::str::contains("until 2099-12-30"))
+    .stdout(predicates::str::contains("05:21"));
 }
 
 #[test]
@@ -177,7 +178,8 @@ fn test_custom_am_event_correctness() {
     .assert()
     .success()
     .stdout(predicates::str::contains("going to sleep for"))
-    .stdout(predicates::str::contains("until 2099-12-30 07:07:05"));
+    .stdout(predicates::str::contains("until 2099-12-30"))
+    .stdout(predicates::str::contains(":07:05"));
 }
 
 #[test]
@@ -201,7 +203,8 @@ fn test_custom_pm_event_correctness() {
     .assert()
     .success()
     .stdout(predicates::str::contains("going to sleep for"))
-    .stdout(predicates::str::contains("until 2099-12-30 16:57:51"));
+    .stdout(predicates::str::contains("until 2099-12-30"))
+    .stdout(predicates::str::contains("57:51"));
 }
 
 #[test]

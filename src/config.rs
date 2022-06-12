@@ -1,7 +1,6 @@
 use std::{fs, path::Path, result};
 
-use chrono::{DateTime, Duration, FixedOffset, Local, TimeZone};
-use dirs;
+use chrono::{DateTime, Duration, FixedOffset, Local, NaiveDate, TimeZone};
 use serde::Deserialize;
 use structopt::StructOpt;
 
@@ -11,7 +10,7 @@ use super::{
     parsers, structs,
 };
 
-type Result<T> = result::Result<T, HeliocronError>;
+type Result<T, E = HeliocronError> = result::Result<T, E>;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -65,6 +64,7 @@ pub enum Subcommand {
             short = "o",
             long = "offset",
             default_value = "00:00:00",
+            // TODO: should this be try_from_str?
             parse(from_str=parsers::parse_offset),
             allow_hyphen_values = true,
         )]
@@ -103,14 +103,31 @@ pub enum Subcommand {
 
 #[derive(Debug, StructOpt, Clone)]
 struct DateArgs {
-    #[structopt(short = "d", long = "date")]
-    date: Option<String>,
+    #[structopt(
+        short = "d",
+        long = "date",
+        help = "Set the date for which the calculations should be run. Expected to be in the format %Y-%m-%d and defaults to today's date in the local timezone if not set.",
+        parse(try_from_str=parse_date)
+    )]
+    date: Option<NaiveDate>,
 
-    #[structopt(short = "f", long = "date-format", default_value = "%Y-%m-%d")]
-    date_format: String,
+    #[structopt(short = "t", long = "time-zone", allow_hyphen_values = true, parse(try_from_str=parse_tz))]
+    time_zone: Option<FixedOffset>,
+}
 
-    #[structopt(short = "t", long = "time-zone", allow_hyphen_values = true)]
-    time_zone: Option<String>,
+fn parse_date(d: &str) -> Result<NaiveDate, String> {
+    NaiveDate::parse_from_str(d, "%Y-%m-%d").map_err(|e| e.to_string())
+}
+
+fn parse_tz(tz: &str) -> Result<chrono::FixedOffset, String> {
+    let x = chrono::DateTime::parse_from_str(&format!("2022-01-01T00:00:00{}", tz), "%FT%T%:z")
+        .map_err(|_| {
+            format!(
+                "Invalid timezone - expected [+|-]HH:MM between -23:59 and +23:59, got {:?}",
+                tz
+            )
+        })?;
+    Ok(*x.offset())
 }
 
 #[derive(Debug, Deserialize)]
@@ -173,13 +190,15 @@ impl Config {
         // set the date
         let date_args = cli_args.date_args;
 
-        if let Some(date) = date_args.date {
-            self.date = parsers::parse_date(
-                &date,
-                &date_args.date_format,
-                date_args.time_zone.as_deref(),
-            )?;
-        }
+        let date = date_args
+            .date
+            .unwrap_or_else(|| Local::today().naive_local());
+
+        let time_zone = date_args
+            .time_zone
+            .unwrap_or_else(|| *Local::now().offset());
+
+        self.date = time_zone.from_local_date(&date).unwrap().and_hms(12, 0, 0);
 
         self.action = match cli_args.subcommand {
             Subcommand::Wait {
@@ -209,11 +228,10 @@ pub fn parse_config() -> Result<Config> {
     // master function for collecting all config variables and returning a single runtime configuration
 
     // 0. Set up default config
+    let today = Local::today();
     let default_config = Config {
         coordinates: structs::Coordinates::from_decimal_degrees("51.4769N", "0.0005W")?,
-        date: Local::today()
-            .and_hms(12, 0, 0)
-            .with_timezone(&FixedOffset::from_offset(Local::today().offset())),
+        date: today.and_hms(12, 0, 0).with_timezone(today.offset()),
         // action will always get overwritten by the action provided later on from the CLI args
         action: Action::Report { json: false },
     };
