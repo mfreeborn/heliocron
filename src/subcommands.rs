@@ -1,6 +1,6 @@
 use std::result;
 
-use chrono::Duration;
+use chrono::{Duration, Local};
 
 use super::{calc, enums, errors, report, utils};
 
@@ -14,6 +14,33 @@ pub fn display_report(solar_calculations: calc::SolarCalculations, json: bool) -
         report.to_string()
     };
     println!("{}", output);
+    Ok(())
+}
+
+pub fn display_now(sc: calc::SolarCalculations, civil: bool) -> Result<()> {
+    // Get times for sunrise/sunset or dawn/dusk
+    let report = report::SolarReport::new(sc);
+
+    let (begin, end) = match if civil {
+        (report.civil_dawn.datetime, report.civil_dusk.datetime)
+    } else {
+        (report.sunrise.datetime, report.sunset.datetime)
+    } {
+        (Some(begin), Some(end)) => (begin, end),
+        (Some(_), None) => panic!("Missing value for dusk"),
+        (None, Some(_)) => panic!("Missing value for dawn"),
+        (None, None) => panic!("Missing values for dawn and dusk"),
+    };
+
+    // Is the current time between these two?
+    let now = Local::now();
+
+    if begin <= now && now <= end {
+        println!("day");
+    } else {
+        println!("night");
+    }
+
     Ok(())
 }
 

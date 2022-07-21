@@ -59,6 +59,13 @@ pub enum Commands {
         json: bool,
     },
 
+    /// Report whether it is day or night right now
+    Now {
+        /// Report day/night based on civil dawn/dusk rather than sunrise/sunset
+        #[clap(short = 'c', long = "civil")]
+        civil: bool,
+    },
+
     Wait {
         #[clap(
             help = "Choose an event from which to base your delay.", 
@@ -189,6 +196,9 @@ impl TomlConfig {
 
 #[derive(Debug, Clone)]
 pub enum Action {
+    Now {
+        civil: bool,
+    },
     Report {
         json: bool,
     },
@@ -251,6 +261,7 @@ impl Config {
                     run_missed_task,
                 }
             }
+            Commands::Now { civil } => Action::Now { civil },
             Commands::Report { json } => Action::Report { json },
         };
 

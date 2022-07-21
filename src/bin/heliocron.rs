@@ -9,6 +9,7 @@ async fn run_heliocron() -> Result<(), errors::HeliocronError> {
 
     match config.action {
         config::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
+        config::Action::Now { civil } => subcommands::display_now(solar_calculations, civil)?,
         config::Action::Wait {
             event,
             offset,
