@@ -1,4 +1,4 @@
-use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Duration, FixedOffset, NaiveTime, TimeZone};
 
 use super::traits::{DateTimeExt, NaiveTimeExt};
 use super::{enums, structs};
