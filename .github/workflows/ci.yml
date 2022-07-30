@@ -53,16 +53,16 @@ jobs:
   
   lint:
     name: Check Rust code with rustfmt and clippy
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-        - uses: dtolnay/rust-toolchain@stable
-          with:
-            components: rustfmt, clippy
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
-        - name: run rustfmt
-          run: cargo fmt --all -- --check
+      - name: run rustfmt
+        run: cargo fmt --all -- --check
 
-        - name: run clippy
-          run: cargo clippy --all-targets -- -D warnings
+      - name: run clippy
+        run: cargo clippy --all-targets -- -D warnings
