@@ -1,19 +1,27 @@
-use chrono::{DateTime, Duration, FixedOffset, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
+use chrono::{DateTime, Duration, FixedOffset, NaiveTime, TimeZone};
 
 use super::traits::{DateTimeExt, NaiveTimeExt};
 use super::{enums, structs};
 
+/// Convert a chrono::FixedOffset into a deimal float representation.
+fn offset_to_decimal_float(offset: &FixedOffset) -> f64 {
+    offset.local_minus_utc() as f64 / 3600.0
+}
+
 #[derive(Debug, Clone)]
-struct SolarCalculationsRow {
+pub struct SolarCalculations {
+    pub date: DateTime<FixedOffset>,
+    pub coordinates: structs::Coordinates,
+
     solar_declination: f64,
     solar_noon_fraction: f64,
     corrected_solar_elevation_angle: f64,
 }
 
-impl SolarCalculationsRow {
-    pub fn new(date: NaiveDateTime, coordinates: structs::Coordinates) -> SolarCalculationsRow {
-        let time_zone = 0.;
-        let julian_date: f64 = date.to_julian_date();
+impl SolarCalculations {
+    pub fn new(date: DateTime<FixedOffset>, coordinates: structs::Coordinates) -> Self {
+        let time_zone = offset_to_decimal_float(date.offset());
+        let julian_date: f64 = date.naive_utc().to_julian_date();
 
         let julian_century = (julian_date - 2451545.0) / 36525.0;
 
@@ -111,45 +119,18 @@ impl SolarCalculationsRow {
 
         let corrected_solar_elevation_angle = solar_elevation_angle + atmospheric_refraction;
 
-        SolarCalculationsRow {
+        Self {
+            date,
+            coordinates,
             solar_declination,
             solar_noon_fraction,
             corrected_solar_elevation_angle,
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct SolarCalculations {
-    pub date: DateTime<FixedOffset>,
-    pub coordinates: structs::Coordinates,
-
-    midday_calculations: SolarCalculationsRow,
-}
-
-impl SolarCalculations {
-    pub fn new(
-        date: DateTime<FixedOffset>,
-        coordinates: structs::Coordinates,
-    ) -> SolarCalculations {
-        // Using `naive_local()` gives us the correct date when the offset would push the date
-        // either one day ahead or one day before.
-        let local_date = date.naive_local();
-        let midday_calculations = SolarCalculationsRow::new(local_date, coordinates);
-
-        SolarCalculations {
-            date,
-            coordinates,
-            midday_calculations,
-        }
-    }
 
     pub fn get_solar_noon(&self) -> structs::EventTime {
-        let solar_noon =
-            self.day_fraction_to_datetime(self.midday_calculations.solar_noon_fraction);
-        structs::EventTime {
-            datetime: Some(solar_noon),
-        }
+        let solar_noon = self.day_fraction_to_datetime(self.solar_noon_fraction);
+        structs::EventTime::new(Some(solar_noon))
     }
 
     fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
@@ -175,34 +156,21 @@ impl SolarCalculations {
         // Creating the datetime using the UTC offset, before updating the timezone to the one set by
         // the user, is necessary so that the calculations and timezones all match up.
         // These are all safe to unwrap because we are taking the values from a valid NaiveTime.
-        Utc.from_local_datetime(
-            &date
-                .with_hour(time.hour())
-                .unwrap()
-                .with_minute(time.minute())
-                .unwrap()
-                .with_second(time.second())
-                .unwrap(),
-        )
-        .unwrap()
-        .with_timezone(self.date.offset())
+
+        self.date
+            .offset()
+            .from_local_date(&date.date())
+            .and_time(time)
+            .unwrap()
     }
 
     fn calculate_hour_angle(&self, degrees_below_horizon: f64) -> Option<f64> {
         let event_angle = degrees_below_horizon + 90.0;
         let hour_angle = (((event_angle.to_radians().cos()
             / (self.coordinates.latitude.to_radians().cos()
-                * self
-                    .midday_calculations
-                    .solar_declination
-                    .to_radians()
-                    .cos()))
+                * self.solar_declination.to_radians().cos()))
             - self.coordinates.latitude.to_radians().tan()
-                * self
-                    .midday_calculations
-                    .solar_declination
-                    .to_radians()
-                    .tan())
+                * self.solar_declination.to_radians().tan())
         .acos())
         .to_degrees();
 
@@ -263,21 +231,15 @@ impl SolarCalculations {
         match hour_angle {
             Some(hour_angle) => {
                 let day_fraction = match time_of_day {
-                    enums::TimeOfDay::AM => {
-                        self.midday_calculations.solar_noon_fraction - (hour_angle / 360.0)
-                    }
-                    enums::TimeOfDay::PM => {
-                        self.midday_calculations.solar_noon_fraction + (hour_angle / 360.0)
-                    }
+                    enums::TimeOfDay::AM => self.solar_noon_fraction - (hour_angle / 360.0),
+                    enums::TimeOfDay::PM => self.solar_noon_fraction + (hour_angle / 360.0),
                 };
 
                 let event_time = self.day_fraction_to_datetime(day_fraction);
 
-                structs::EventTime {
-                    datetime: Some(event_time),
-                }
+                structs::EventTime::new(Some(event_time))
             }
-            None => structs::EventTime { datetime: None },
+            None => structs::EventTime::new(None),
         }
     }
 
@@ -286,7 +248,7 @@ impl SolarCalculations {
         let sunrise = self.calculate_event_time(enums::Event::new("sunrise", None).unwrap());
         let sunset = self.calculate_event_time(enums::Event::new("sunset", None).unwrap());
 
-        match (sunrise.datetime, sunset.datetime) {
+        match (sunrise.0, sunset.0) {
             (Some(sunrise), Some(sunset)) => sunset - sunrise,
             _ => {
                 let max_solar_elevation = self.calculate_max_solar_elevation();
@@ -305,15 +267,78 @@ impl SolarCalculations {
     /// the south, corrected for atmospheric refraction.
     fn calculate_max_solar_elevation(&self) -> f64 {
         // Safe to unwrap as there is always a solar noon.
-        let date = self.get_solar_noon().datetime.unwrap().naive_utc();
-        SolarCalculationsRow::new(date, self.coordinates).corrected_solar_elevation_angle
+        let date = self.get_solar_noon().0.unwrap();
+        SolarCalculations::new(date, self.coordinates).corrected_solar_elevation_angle
     }
 }
 
 #[cfg(test)]
 mod tests {
-    // note that the correctness of the maths in this module is tested elsewhere
+    use crate::structs::{Coordinates, Latitude, Longitude};
+
     use super::*;
+
+    #[test]
+    fn test_offset_to_decimal_float() {
+        assert_eq!(offset_to_decimal_float(&FixedOffset::east(3600)), 1.0);
+        assert_eq!(offset_to_decimal_float(&FixedOffset::east(-3600)), -1.0);
+        #[rustfmt::skip]
+        assert_eq!(offset_to_decimal_float(&FixedOffset::east(-3600 * 10)), -10.0);
+        #[rustfmt::skip]
+        assert_eq!(offset_to_decimal_float(&FixedOffset::east((3600.0 * 10.5) as i32)), 10.5);
+    }
+
+    #[test]
+    fn test_midday_calcs_zero_offset() {
+        let date = FixedOffset::east(0).ymd(2022, 7, 29).and_hms(12, 0, 0);
+        let coords = Coordinates {
+            latitude: Latitude(56.8197),
+            longitude: Longitude(-5.1047),
+        };
+
+        let calcs = SolarCalculations::new(date, coords);
+        assert_eq!(calcs.solar_noon_fraction, 0.5186937689277599);
+    }
+
+    #[test]
+    fn test_midday_calcs_small_offset() {
+        let date = FixedOffset::east(3600).ymd(2022, 7, 29).and_hms(12, 0, 0);
+        let coords = Coordinates {
+            latitude: Latitude(56.8197),
+            longitude: Longitude(-5.1047),
+        };
+
+        let calcs = SolarCalculations::new(date, coords);
+        assert_eq!(calcs.solar_noon_fraction, 0.5603613849259489);
+    }
+
+    #[test]
+    fn test_midday_calcs_large_pos_offset() {
+        let date = FixedOffset::east(3600 * 11)
+            .ymd(2022, 7, 29)
+            .and_hms(12, 0, 0);
+        let coords = Coordinates {
+            latitude: Latitude(-37.0321),
+            longitude: Longitude(175.122),
+        };
+
+        let calcs = SolarCalculations::new(date, coords);
+        assert_eq!(calcs.solar_noon_fraction, 0.4764071517220478);
+    }
+
+    #[test]
+    fn test_midday_calcs_large_neg_offset() {
+        let date = FixedOffset::west((3600.0 * 9.5) as i32)
+            .ymd(2022, 7, 29)
+            .and_hms(12, 0, 0);
+        let coords = Coordinates {
+            latitude: Latitude(-9.3968),
+            longitude: Longitude(-140.0777),
+        };
+
+        let calcs = SolarCalculations::new(date, coords);
+        assert_eq!(calcs.solar_noon_fraction, 0.4977758080863915);
+    }
 
     #[test]
     fn test_day_fraction_to_time_underoverflow() {

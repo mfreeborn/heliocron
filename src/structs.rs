@@ -7,22 +7,22 @@ use super::errors::{ConfigErrorKind, HeliocronError};
 
 type Result<T, E = HeliocronError> = result::Result<T, E>;
 
+/// A newtype representing an optional datetime. This allows us to provide custom
+/// serialization methods when converting to a String or JSON.
 #[derive(Debug)]
-pub struct EventTime {
-    pub datetime: Option<DateTime<FixedOffset>>,
-}
+pub struct EventTime(pub Option<DateTime<FixedOffset>>);
 
 impl EventTime {
-    pub fn new(datetime: Option<DateTime<FixedOffset>>) -> EventTime {
-        EventTime { datetime }
+    pub fn new(datetime: Option<DateTime<FixedOffset>>) -> Self {
+        Self(datetime)
     }
 
     pub fn is_some(&self) -> bool {
-        self.datetime.is_some()
+        self.0.is_some()
     }
 
     pub fn time(&self) -> Option<NaiveTime> {
-        self.datetime.map(|dt| dt.time())
+        self.0.map(|dt| dt.time())
     }
 }
 
@@ -31,7 +31,7 @@ impl Serialize for EventTime {
     where
         S: serde::Serializer,
     {
-        match self.datetime {
+        match self.0 {
             Some(datetime) => serializer.serialize_str(&datetime.to_rfc3339()),
             None => serializer.serialize_none(),
         }
@@ -43,17 +43,11 @@ impl fmt::Display for EventTime {
         write!(
             f,
             "{}",
-            match self.datetime {
+            match self.0 {
                 Some(datetime) => datetime.to_string(),
                 None => "Never".to_string(),
             }
         )
-    }
-}
-
-impl From<Option<DateTime<FixedOffset>>> for EventTime {
-    fn from(datetime: Option<DateTime<FixedOffset>>) -> EventTime {
-        EventTime::new(datetime)
     }
 }
 

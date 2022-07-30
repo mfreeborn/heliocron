@@ -28,7 +28,7 @@ pub async fn wait(
         _ => solar_calculations.calculate_event_time(event),
     };
 
-    match event_time.datetime {
+    match event_time.0 {
         Some(datetime) => {
             let wait_until = datetime + offset;
             utils::wait(wait_until).await?;
@@ -38,7 +38,6 @@ pub async fn wait(
             // if the event was missed. We allow a default tolerance of 30s, which should be more than enough to
             // catch any scheduling delays that could cause a second or two's delay. At some point, this arbitrary
             // number could be made configurable, if desired.
-
             if run_missed_task {
                 Ok(())
             } else {

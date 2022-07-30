@@ -68,42 +68,115 @@ fn test_report_json_output() {
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
 
     // parse the output into a Json Value
-    let json_output: serde_json::Value = serde_json::from_str(
-        &String::from_utf8(
-            cmd.args(&[
-                "--date",
-                "2022-06-11",
-                "--time-zone",
-                "+01:00",
-                "--latitude",
-                "51.4N",
-                "--longitude",
-                "5.4670W",
-                "report",
-                "--json",
-            ])
-            .assert()
-            .success()
-            .get_output()
-            .stdout
-            .clone(),
-        )
-        .unwrap(),
+    let json: serde_json::Value = serde_json::from_slice(
+        &cmd.args(&[
+            "--date",
+            "2022-06-11",
+            "--time-zone",
+            "+01:00",
+            "--latitude",
+            "51.4N",
+            "--longitude",
+            "5.4670W",
+            "report",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone(),
     )
     .unwrap();
 
     let expected = serde_json::json!({
         "location": {"latitude": 51.4000, "longitude": -5.4670},
         "date": "2022-06-11T12:00:00+01:00",
-        "day_length": 59537,
-        "solar_noon": "2022-06-11T13:21:32+01:00",
-        "sunrise": "2022-06-11T05:05:23+01:00",
-        "sunset": "2022-06-11T21:37:40+01:00",
-        "dawn": {"civil": "2022-06-11T04:18:28+01:00", "nautical": "2022-06-11T03:06:38+01:00", "astronomical": null},
-        "dusk": {"civil": "2022-06-11T22:24:36+01:00", "nautical": "2022-06-11T23:36:26+01:00", "astronomical": null},
+        "day_length": 59534,
+        "solar_noon": "2022-06-11T13:21:31+01:00",
+        "sunrise": "2022-06-11T05:05:24+01:00",
+        "sunset": "2022-06-11T21:37:38+01:00",
+        "dawn": {"civil": "2022-06-11T04:18:29+01:00", "nautical": "2022-06-11T03:06:40+01:00", "astronomical": null},
+        "dusk": {"civil": "2022-06-11T22:24:34+01:00", "nautical": "2022-06-11T23:36:23+01:00", "astronomical": null},
     });
 
-    assert_eq!(json_output, expected);
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn test_correct_output() {
+    let output = Command::cargo_bin("heliocron")
+        .unwrap()
+        .args(&[
+            "--date",
+            "2022-07-29",
+            "--time-zone",
+            "+01:00",
+            "--latitude",
+            "56.8197N",
+            "--longitude",
+            "5.1047W",
+            "report",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+
+    let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
+
+    let expected = serde_json::json!({
+        "location": {"latitude": 56.8197, "longitude": -5.1047},
+        "date": "2022-07-29T12:00:00+01:00",
+        "day_length": 59066,
+        "solar_noon": "2022-07-29T13:26:55+01:00",
+        "sunrise": "2022-07-29T05:14:42+01:00",
+        "sunset": "2022-07-29T21:39:08+01:00",
+        "dawn": {"civil": "2022-07-29T04:23:01+01:00", "nautical": "2022-07-29T03:00:07+01:00", "astronomical": null},
+        "dusk": {"civil": "2022-07-29T22:30:48+01:00", "nautical": "2022-07-29T23:53:43+01:00", "astronomical": null},
+    });
+
+    assert_eq!(json, expected);
+}
+
+#[test]
+fn test_correct_output_nz() {
+    let output = Command::cargo_bin("heliocron")
+        .unwrap()
+        .args(&[
+            "--date",
+            "2022-07-29",
+            "--time-zone",
+            "+11:00",
+            "--latitude",
+            "37.0321S",
+            "--longitude",
+            "175.1220E",
+            "report",
+            "--json",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+
+    let json: serde_json::Value = serde_json::from_slice(&output).unwrap();
+
+    let expected = serde_json::json!({
+        "location": {"latitude": -37.0321, "longitude": 175.122},
+        "date": "2022-07-29T12:00:00+11:00",
+        "day_length": 36606,
+        "solar_noon": "2022-07-29T11:26:01+11:00",
+        "sunrise": "2022-07-29T06:20:58+11:00",
+        "sunset": "2022-07-29T16:31:04+11:00",
+        "dawn": {"civil": "2022-07-29T05:53:13+11:00", "nautical": "2022-07-29T05:21:48+11:00", "astronomical": "2022-07-29T04:51:00+11:00"},
+        "dusk": {"civil": "2022-07-29T16:58:49+11:00", "nautical": "2022-07-29T17:30:14+11:00", "astronomical": "2022-07-29T18:01:02+11:00"},
+    });
+
+    assert_eq!(json, expected);
 }
 
 fn assert_report(report: Assert) {
