@@ -1,5 +1,6 @@
 pub mod calc;
-pub mod config;
+pub mod cli;
+pub mod domain;
 pub mod enums;
 pub mod errors;
 pub mod parsers;

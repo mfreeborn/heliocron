@@ -38,13 +38,13 @@ fn test_report_custom_location() {
     // assert that a report is successfully generated when an arbitrary location is given
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
     let report_long = cmd
-        .args(&["--latitude", "51.0N", "--longitude", "4.36E", "report"])
+        .args(&["--latitude", "51.0", "--longitude", "4.36", "report"])
         .assert();
 
     assert_report(report_long);
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_short = cmd.args(&["-l", "51.0N", "-o", "4.36E", "report"]).assert();
+    let report_short = cmd.args(&["-l", "51.0", "-o", "4.36", "report"]).assert();
 
     assert_report(report_short)
 }
@@ -53,12 +53,32 @@ fn test_report_custom_location() {
 fn test_report_custom_timezone() {
     // assert that a report is successfully generated when an arbitrary time zone is given
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_long = cmd.args(&["--time-zone", "+01:00", "report"]).assert();
+    let report_long = cmd
+        .args(&[
+            "--latitude",
+            "51.0",
+            "--longitude",
+            "4.36",
+            "--time-zone",
+            "+01:00",
+            "report",
+        ])
+        .assert();
 
     assert_report(report_long);
 
     let mut cmd = Command::cargo_bin("heliocron").unwrap();
-    let report_short = cmd.args(&["-t", "-05:00", "report"]).assert();
+    let report_short = cmd
+        .args(&[
+            "--latitude",
+            "51.0",
+            "--longitude",
+            "4.36",
+            "-t",
+            "-05:00",
+            "report",
+        ])
+        .assert();
 
     assert_report(report_short);
 }
@@ -75,9 +95,9 @@ fn test_report_json_output() {
             "--time-zone",
             "+01:00",
             "--latitude",
-            "51.4N",
+            "51.4",
             "--longitude",
-            "5.4670W",
+            "-5.4670",
             "report",
             "--json",
         ])
@@ -113,9 +133,9 @@ fn test_correct_output() {
             "--time-zone",
             "+01:00",
             "--latitude",
-            "56.8197N",
+            "56.8197",
             "--longitude",
-            "5.1047W",
+            "-5.1047",
             "report",
             "--json",
         ])
@@ -151,9 +171,9 @@ fn test_correct_output_nz() {
             "--time-zone",
             "+11:00",
             "--latitude",
-            "37.0321S",
+            "-37.0321",
             "--longitude",
-            "175.1220E",
+            "175.1220",
             "report",
             "--json",
         ])

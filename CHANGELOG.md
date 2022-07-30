@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.8.0] - 2022-xx-xx
 ### Fixed
-- More time zone errors... more tests added to prove correctness ([#53](https://github.com/mfreeborn/heliocron/issues/53))
+- More time zone errors... more tests added to prove correctness ([#53](https://github.com/mfreeborn/heliocron/issues/53)).
+
+### Changed
+- Switched from pseudo-decimal degrees (e.g. "5.1N") to actual decimal degrees (e.g. 5.1) for coordinates ([#56](https://github.com/mfreeborn/heliocron/issues/56)).
 
 ## [v0.7.0] - 2022-06-12
 ### Fixed

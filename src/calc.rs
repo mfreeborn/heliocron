@@ -1,7 +1,7 @@
 use chrono::{DateTime, Duration, FixedOffset, NaiveTime, TimeZone};
 
 use super::traits::{DateTimeExt, NaiveTimeExt};
-use super::{enums, structs};
+use super::{domain, enums, structs};
 
 /// Convert a chrono::FixedOffset into a deimal float representation.
 fn offset_to_decimal_float(offset: &FixedOffset) -> f64 {
@@ -11,7 +11,7 @@ fn offset_to_decimal_float(offset: &FixedOffset) -> f64 {
 #[derive(Debug, Clone)]
 pub struct SolarCalculations {
     pub date: DateTime<FixedOffset>,
-    pub coordinates: structs::Coordinates,
+    pub coordinates: domain::Coordinates,
 
     solar_declination: f64,
     solar_noon_fraction: f64,
@@ -19,7 +19,7 @@ pub struct SolarCalculations {
 }
 
 impl SolarCalculations {
-    pub fn new(date: DateTime<FixedOffset>, coordinates: structs::Coordinates) -> Self {
+    pub fn new(date: DateTime<FixedOffset>, coordinates: domain::Coordinates) -> Self {
         let time_zone = offset_to_decimal_float(date.offset());
         let julian_date: f64 = date.naive_utc().to_julian_date();
 
@@ -268,13 +268,13 @@ impl SolarCalculations {
     fn calculate_max_solar_elevation(&self) -> f64 {
         // Safe to unwrap as there is always a solar noon.
         let date = self.get_solar_noon().0.unwrap();
-        SolarCalculations::new(date, self.coordinates).corrected_solar_elevation_angle
+        SolarCalculations::new(date, self.coordinates.clone()).corrected_solar_elevation_angle
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::structs::{Coordinates, Latitude, Longitude};
+    use crate::domain::{Coordinates, Latitude, Longitude};
 
     use super::*;
 
@@ -292,8 +292,8 @@ mod tests {
     fn test_midday_calcs_zero_offset() {
         let date = FixedOffset::east(0).ymd(2022, 7, 29).and_hms(12, 0, 0);
         let coords = Coordinates {
-            latitude: Latitude(56.8197),
-            longitude: Longitude(-5.1047),
+            latitude: Latitude::new(56.8197).unwrap(),
+            longitude: Longitude::new(-5.1047).unwrap(),
         };
 
         let calcs = SolarCalculations::new(date, coords);
@@ -304,8 +304,8 @@ mod tests {
     fn test_midday_calcs_small_offset() {
         let date = FixedOffset::east(3600).ymd(2022, 7, 29).and_hms(12, 0, 0);
         let coords = Coordinates {
-            latitude: Latitude(56.8197),
-            longitude: Longitude(-5.1047),
+            latitude: Latitude::new(56.8197).unwrap(),
+            longitude: Longitude::new(-5.1047).unwrap(),
         };
 
         let calcs = SolarCalculations::new(date, coords);
@@ -318,8 +318,8 @@ mod tests {
             .ymd(2022, 7, 29)
             .and_hms(12, 0, 0);
         let coords = Coordinates {
-            latitude: Latitude(-37.0321),
-            longitude: Longitude(175.122),
+            latitude: Latitude::new(-37.0321).unwrap(),
+            longitude: Longitude::new(175.122).unwrap(),
         };
 
         let calcs = SolarCalculations::new(date, coords);
@@ -332,8 +332,8 @@ mod tests {
             .ymd(2022, 7, 29)
             .and_hms(12, 0, 0);
         let coords = Coordinates {
-            latitude: Latitude(-9.3968),
-            longitude: Longitude(-140.0777),
+            latitude: Latitude::new(-9.3968).unwrap(),
+            longitude: Longitude::new(-140.0777).unwrap(),
         };
 
         let calcs = SolarCalculations::new(date, coords);
@@ -346,7 +346,10 @@ mod tests {
         // occur either the following or previous day. This results in a day fraction which is either negative
         // or >= 1
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(0.0).unwrap(),
+            longitude: Longitude::new(0.0).unwrap(),
+        };
         let report = SolarCalculations::new(date, coordinates);
 
         let params = [
@@ -363,7 +366,10 @@ mod tests {
     #[test]
     fn test_day_fraction_to_time() {
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("0.0N", "0.0W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(0.0).unwrap(),
+            longitude: Longitude::new(0.0).unwrap(),
+        };
         let report = SolarCalculations::new(date, coordinates);
         let params = [
             ("2020-03-25 00:00:00 +00:00", 0.0),
@@ -383,8 +389,10 @@ mod tests {
     fn test_day_length() {
         // assert the correct length of day for a typical day
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("51.4769N", "0.0005W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(51.4769).unwrap(),
+            longitude: Longitude::new(-0.0005).unwrap(),
+        };
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 
@@ -398,8 +406,10 @@ mod tests {
     fn test_day_length_24_hour_night() {
         // assert the correct length of day when the sun never rises
         let date = DateTime::parse_from_rfc3339("2020-12-25T12:00:00+00:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("70.67299N", "23.67165E").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(70.67299).unwrap(),
+            longitude: Longitude::new(23.67165).unwrap(),
+        };
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 
@@ -413,8 +423,10 @@ mod tests {
     fn test_day_length_24_hour_day() {
         // assert the correct length of day when the sun never rises
         let date = DateTime::parse_from_rfc3339("2020-06-25T12:00:00+00:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("70.67299N", "23.67165E").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(70.67299).unwrap(),
+            longitude: Longitude::new(23.67165).unwrap(),
+        };
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 

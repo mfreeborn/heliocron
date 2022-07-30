@@ -1,15 +1,14 @@
 use std::process;
 
-use heliocron::{calc, config, errors, subcommands};
+use heliocron::{calc, cli, errors, subcommands};
 
 async fn run_heliocron() -> Result<(), errors::HeliocronError> {
-    // here, we simply take a fully parsed Config and perform the selected action
-    let config = config::parse_config()?;
+    let config = cli::parse_config()?;
     let solar_calculations = calc::SolarCalculations::new(config.date, config.coordinates);
 
     match config.action {
-        config::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
-        config::Action::Wait {
+        cli::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
+        cli::Action::Wait {
             event,
             offset,
             run_missed_task,
