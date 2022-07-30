@@ -3,10 +3,7 @@ use std::{collections::HashMap, fmt};
 use chrono::{DateTime, Duration, FixedOffset};
 use serde::ser::{Serialize, SerializeStruct};
 
-use super::{
-    calc, enums,
-    structs::{Coordinates, EventTime},
-};
+use super::{calc, domain::Coordinates, enums, structs::EventTime};
 
 #[derive(Debug)]
 pub struct SolarReport {
@@ -86,7 +83,7 @@ impl SolarReport {
             .calculate_event_time(enums::Event::new("astronomical_dusk", None).unwrap());
         SolarReport {
             date: solar_calculations.date,
-            coordinates: solar_calculations.coordinates,
+            coordinates: solar_calculations.coordinates.clone(),
             solar_noon: solar_calculations.get_solar_noon(),
             day_length: solar_calculations.calculate_day_length(),
             sunrise,
@@ -151,15 +148,15 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use super::*;
-    use crate::structs;
+    use crate::domain::{Latitude, Longitude};
 
     #[test]
     fn test_solar_report_new() {
         // check that a 'new' method is defined and takes a coordinate and a date as parameters
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates {
-            latitude: structs::Latitude(0.0),
-            longitude: structs::Longitude(0.0),
+        let coordinates = Coordinates {
+            latitude: Latitude::new(0.0).unwrap(),
+            longitude: Longitude::new(0.0).unwrap(),
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
@@ -171,9 +168,9 @@ mod tests {
     fn test_report_content() {
         // check that the report contains all the correct metrics
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates {
-            latitude: structs::Latitude(0.0),
-            longitude: structs::Longitude(0.0),
+        let coordinates = Coordinates {
+            latitude: Latitude::new(0.0).unwrap(),
+            longitude: Longitude::new(0.0).unwrap(),
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
@@ -209,8 +206,11 @@ mod tests {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         // ~Springtime
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        let coordinates =Coordinates {
+            latitude: Latitude::new(55.9533).unwrap(),
+            longitude: Longitude::new(-3.1883).unwrap(),
+        }
+            ;
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
         let report = SolarReport::new(calcs);
@@ -228,7 +228,10 @@ mod tests {
         // mid-summer (there is no true night; it stays astronomical twilight)
         let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+01:00").unwrap();
         let coordinates =
-            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        Coordinates {
+            latitude: Latitude::new(55.9533).unwrap(),
+            longitude: Longitude::new(-3.1883).unwrap(),
+        };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
@@ -250,7 +253,10 @@ mod tests {
         // now try with a non-zero time zone
         let date = DateTime::parse_from_rfc3339("2020-03-30T12:00:00+01:00").unwrap();
         let coordinates =
-            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        Coordinates {
+            latitude: Latitude::new(55.9533).unwrap(),
+            longitude: Longitude::new(-3.1883).unwrap(),
+        };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
@@ -267,7 +273,11 @@ mod tests {
 
         // at an extreme longitude with a very non-local timezone
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("55.9533N", "174.0W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(55.9533).unwrap(),
+            longitude: Longitude::new(-174.0).unwrap(),
+        }
+        ;
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
@@ -284,7 +294,10 @@ mod tests {
 
         // an extreme northern latitude during the summer
         let date = DateTime::parse_from_rfc3339("2020-06-21T12:00:00+02:00").unwrap();
-        let coordinates = structs::Coordinates::from_decimal_degrees("78.22N", "15.635E").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(78.22).unwrap(),
+            longitude: Longitude::new(15.635).unwrap(),
+        };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
         let report = SolarReport::new(calcs);
@@ -305,8 +318,10 @@ mod tests {
     fn test_json_output_format() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         let date = DateTime::parse_from_rfc3339("2020-03-25T12:00:00+00:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("55.9533N", "3.1883W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(55.9533).unwrap(),
+            longitude: Longitude::new(-3.1883).unwrap(),
+        };
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
         let report = SolarReport::new(calcs);
@@ -328,8 +343,10 @@ mod tests {
     fn test_json_output_format_with_null() {
         // validated against NOAA calculations https://www.esrl.noaa.gov/gmd/grad/solcalc/calcdetails.html
         let date = DateTime::parse_from_rfc3339("2022-06-11T12:00:00+01:00").unwrap();
-        let coordinates =
-            structs::Coordinates::from_decimal_degrees("51.4000N", "5.4670W").unwrap();
+        let coordinates = Coordinates {
+            latitude: Latitude::new(51.4000).unwrap(),
+            longitude: Longitude::new(-5.4670).unwrap(),
+        };
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
         let report = SolarReport::new(calcs);
