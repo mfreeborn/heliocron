@@ -23,7 +23,7 @@ jobs:
     name: Run Rust tests
     runs-on: ubuntu-latest
     env:
-      NATIVE_TARGET: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+      NATIVE_TARGET: matrix.target == 'x86_64-unknown-linux-gnu'
     strategy:
       fail-fast: false
       matrix:
@@ -35,7 +35,7 @@ jobs:
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-        if: env.NATIVE_TARGET == false
+        if: env.NATIVE_TARGET == 'false'
 
       - uses: Swatinem/rust-cache@v2
 
