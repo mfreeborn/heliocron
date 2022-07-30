@@ -25,32 +25,32 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        args:
-          - {
-              target: "x86_64-unknown-linux-gnu",
-              cmd: "cargo",
-            }
-          - {
-              target: "armv7-unknown-linux-gnueabihf",
-              cmd: "cross",
-            }
-          - {
-              target: "arm-unknown-linux-gnueabihf",
-              cmd: "cross",
-            }
+        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf]
     steps:
       - uses: actions/checkout@v3
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: install cross
+      - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-        if: matrix.args.cmd == 'cross'
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: run tests
-        run: ${{ matrix.args.cmd }} test --no-fail-fast --verbose --target ${{ matrix.args.target }} -- --nocapture
+      - name: Set test command
+        env:
+          NATIVE_TARGET: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+        run: |
+          if ${NATIVE_TARGET} == true; then
+            echo "test_bin=cargo" >> $GITHUB_ENV
+          else
+            echo "test_bin=cross" >> $GITHUB_ENV
+          fi
+
+      - name: Run tests
+        run: ${{ env.test_bin }} test --no-fail-fast --verbose --target ${{ matrix.args.target }} -- --nocapture
+        env:
+          TEST_BINARY:
   
   lint:
     name: Check Rust code with rustfmt and clippy
@@ -62,8 +62,8 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: run rustfmt
+      - name: Run rustfmt
         run: cargo fmt --all -- --check
 
-      - name: run clippy
+      - name: Run clippy
         run: cargo clippy --all-targets -- -D warnings
