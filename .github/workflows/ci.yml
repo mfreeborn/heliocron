@@ -45,7 +45,7 @@ jobs:
 
       - name: install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-        if: ${{ matrix.args.cmd == cross }}
+        if: ${{ matrix.args.cmd == "cross" }}
 
       - uses: Swatinem/rust-cache@v2
 
