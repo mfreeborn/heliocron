@@ -21,23 +21,20 @@ env:
 jobs:
   run_tests:
     name: Run Rust tests
-    runs-on: ${{ matrix.args.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         args:
           - {
-              os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
               cmd: "cargo",
             }
           - {
-              os: "ubuntu-latest",
               target: "armv7-unknown-linux-gnueabihf",
               cmd: "cross",
             }
           - {
-              os: "ubuntu-latest",
               target: "arm-unknown-linux-gnueabihf",
               cmd: "cross",
             }
@@ -45,6 +42,10 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: dtolnay/rust-toolchain@stable
+
+      - name: install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+        if: ${{ matrix.args.cmd == cross }}
 
       - uses: Swatinem/rust-cache@v2
 
