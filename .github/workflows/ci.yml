@@ -21,7 +21,7 @@ jobs:
     name: Run Rust tests
     runs-on: ubuntu-latest
     env:
-      NATIVE_TARGET: matrix.target == 'x86_64-unknown-linux-gnu'
+      NATIVE_TARGET: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,16 +37,16 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Set test command
+      - name: Set test runner
         run: |
           if ${NATIVE_TARGET} == true; then
-            echo "test_bin=cargo" >> $GITHUB_ENV
+            echo "test_runner=cargo" >> $GITHUB_ENV
           else
-            echo "test_bin=cross" >> $GITHUB_ENV
+            echo "test_runner=cross" >> $GITHUB_ENV
           fi
 
       - name: Run tests
-        run: ${{ env.test_bin }} test --no-fail-fast --verbose --target ${{ matrix.target }} -- --nocapture
+        run: ${{ env.test_runner }} test --no-fail-fast --verbose --target ${{ matrix.target }} -- --nocapture
   
   lint:
     name: Check Rust code with rustfmt and clippy
