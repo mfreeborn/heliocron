@@ -6,77 +6,63 @@ on:
     branches:
     - master
 
+# Cancel previous workflows if they are the same workflow on same ref (branch/tags)
+# with the same event (push/pull_request) even they are in progress.
+# This setting will help reduce the number of duplicated workflows.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_PROFILE_DEV_DEBUG: 0
+  RUST_BACKTRACE: full
 
 jobs:
-  # Runs rustfmt + tests + clippy
-  ci:
-    runs-on: ${{ matrix.triple.os }}
+  run_tests:
+    name: Run Rust tests
+    runs-on: ${{ matrix.args.os }}
     strategy:
       fail-fast: false
       matrix:
-        triple:
+        args:
           - {
               os: "ubuntu-latest",
               target: "x86_64-unknown-linux-gnu",
-              cross: false,
+              cmd: "cargo",
             }
           - {
               os: "ubuntu-latest",
               target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
+              cmd: "cross",
             }
           - {
               os: "ubuntu-latest",
               target: "arm-unknown-linux-gnueabihf",
-              cross: true,
+              cmd: "cross",
             }
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-          profile: minimal
-          target: ${{ matrix.triple.target }}
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Check cargo fmt
-        run: cargo fmt --all -- --check
+      - name: run tests
+        run: ${{ matrix.args.cmd }} test --no-fail-fast --verbose --target ${{ matrix.args.target }} -- --nocapture
+  
+  lint:
+    name: Check Rust code with rustfmt and clippy
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
 
-      - name: Build tests
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-run --locked
-          use-cross: ${{ matrix.triple.cross }}
-        env:
-          RUST_BACKTRACE: full
+        - uses: dtolnay/rust-toolchain@stable
+          with:
+            components: rustfmt, clippy
 
-      - name: Run tests
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-fail-fast -- --nocapture --quiet
-          use-cross: ${{ matrix.triple.cross }}
-        env:
-          RUST_BACKTRACE: full
+        - name: run rustfmt
+          run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        if: ${{ steps.skip_check.outputs.should_skip != 'true' }}
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets -- -D warnings
-          use-cross: ${{ matrix.triple.cross }}
-        env:
-          RUST_BACKTRACE: full
+        - name: run clippy
+          run: cargo clippy --all-targets -- -D warnings
