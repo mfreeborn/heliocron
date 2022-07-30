@@ -4,17 +4,42 @@ use assert_cmd::assert::Assert;
 use assert_cmd::prelude::*;
 use pretty_assertions::assert_eq;
 
+fn find_runner() -> Option<String> {
+    for (key, value) in std::env::vars() {
+        if key.starts_with("CARGO_TARGET_") && key.ends_with("_RUNNER") && !value.is_empty() {
+            return Some(value);
+        }
+    }
+    None
+}
+
+fn get_base_command() -> Command {
+    let mut cmd;
+    let path = assert_cmd::cargo::cargo_bin("heliocron");
+    if let Some(runner) = find_runner() {
+        let mut runner = runner.split_whitespace();
+        cmd = Command::new(runner.next().unwrap());
+        for arg in runner {
+            cmd.arg(arg);
+        }
+        cmd.arg(path);
+    } else {
+        cmd = Command::new(path);
+    }
+    cmd
+}
+
 #[test]
 fn test_plain_bin() {
     // assert that running the binary with no flags doesn't simply fail
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     cmd.assert().code(2);
 }
 
 #[test]
 fn test_help() {
     // assert that a useful help message is given with the --help flag
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let help = cmd.arg("--help").assert();
 
     help.success()
@@ -27,7 +52,7 @@ fn test_help() {
 #[test]
 fn test_report_default_args() {
     // assert that a report is successfully generated when no options are set
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let report = cmd.arg("report").assert();
 
     assert_report(report);
@@ -36,14 +61,14 @@ fn test_report_default_args() {
 #[test]
 fn test_report_custom_location() {
     // assert that a report is successfully generated when an arbitrary location is given
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let report_long = cmd
         .args(&["--latitude", "51.0", "--longitude", "4.36", "report"])
         .assert();
 
     assert_report(report_long);
 
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let report_short = cmd.args(&["-l", "51.0", "-o", "4.36", "report"]).assert();
 
     assert_report(report_short)
@@ -52,7 +77,7 @@ fn test_report_custom_location() {
 #[test]
 fn test_report_custom_timezone() {
     // assert that a report is successfully generated when an arbitrary time zone is given
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let report_long = cmd
         .args(&[
             "--latitude",
@@ -67,7 +92,7 @@ fn test_report_custom_timezone() {
 
     assert_report(report_long);
 
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
     let report_short = cmd
         .args(&[
             "--latitude",
@@ -85,7 +110,7 @@ fn test_report_custom_timezone() {
 
 #[test]
 fn test_report_json_output() {
-    let mut cmd = Command::cargo_bin("heliocron").unwrap();
+    let mut cmd = get_base_command();
 
     // parse the output into a Json Value
     let json: serde_json::Value = serde_json::from_slice(
@@ -124,9 +149,8 @@ fn test_report_json_output() {
 }
 
 #[test]
-fn test_correct_output() {
-    let output = Command::cargo_bin("heliocron")
-        .unwrap()
+fn test_correct_output_small_offset() {
+    let output = get_base_command()
         .args(&[
             "--date",
             "2022-07-29",
@@ -162,9 +186,8 @@ fn test_correct_output() {
 }
 
 #[test]
-fn test_correct_output_nz() {
-    let output = Command::cargo_bin("heliocron")
-        .unwrap()
+fn test_correct_output_large_pos_offset() {
+    let output = get_base_command()
         .args(&[
             "--date",
             "2022-07-29",
