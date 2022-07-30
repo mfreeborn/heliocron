@@ -4,65 +4,45 @@ on:
   workflow_call:
 
 env:
-  CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
+  RUST_BACKTRACE: full
 
 jobs:
-  build:
-    name: "Build binaries"
-    runs-on: ${{ matrix.info.os }}
+  build-release:
+    name: Build binaries
+    runs-on: ubuntu-latest
     env:
-      RUST_BACKTRACE: 1
+      NATIVE_TARGET: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
     strategy:
       fail-fast: false
       matrix:
-        info:
-          - {
-              os: "ubuntu-18.04",
-              target: "x86_64-unknown-linux-gnu",
-              cross: false,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "armv7-unknown-linux-gnueabihf",
-              cross: true,
-            }
-          - {
-              os: "ubuntu-18.04",
-              target: "arm-unknown-linux-gnueabihf",
-              cross: true,
-            }
+        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf]
+
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: ${{ matrix.info.target }}
+      - uses: dtolnay/rust-toolchain@stable
 
-      - name: Enable Rust cache
-        uses: Swatinem/rust-cache@cb2cf0cc7c5198d3364b9630e2c3d457f160790c # 1.4.0
-        with:
-          key: ${{ matrix.info.target }}
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --verbose --locked --target=${{ matrix.info.target }}
-          use-cross: ${{ matrix.info.cross }}
+      - name: Set build binary
+        run: |
+          if ${NATIVE_TARGET} == true; then
+            echo "build_binary=cargo" >> $GITHUB_ENV
+          else
+            echo "build_binary=cross" >> $GITHUB_ENV
+          fi
+
+      - name: Build binary
+        run: ${{ env.build_binary }} build --release --verbose --locked --target ${{ matrix.target }}
 
       - name: Build archive
         shell: bash
         run: |
-          cp target/${{ matrix.info.target }}/release/heliocron ./heliocron
-          tar -czvf "heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.info.target }}.tar.gz" heliocron README.md LICENSE-APACHE LICENSE-MIT
-          echo "ASSET=heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.info.target }}.tar.gz" >> $GITHUB_ENV
+          cp target/${{ matrix.target }}/release/heliocron ./heliocron
+          tar -czvf "heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" heliocron README.md LICENSE-APACHE LICENSE-MIT
+          echo "ASSET=heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
 
-      - name: Create release directory for artifact, move file
+      - name: Create release directory for artifact
         shell: bash
         run: |
           mkdir release
