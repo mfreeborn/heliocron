@@ -35,7 +35,7 @@ jobs:
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-        if: ${{ !env.NATIVE_TARGET }}
+        if: !env.NATIVE_TARGET == 'false'
 
       - uses: Swatinem/rust-cache@v2
 
@@ -48,7 +48,7 @@ jobs:
           fi
 
       - name: Run tests
-        run: ${{ env.test_bin }} test --no-fail-fast --verbose --target ${{ matrix.args.target }} -- --nocapture
+        run: ${{ env.test_bin }} test --no-fail-fast --verbose --target ${{ matrix.target }} -- --nocapture
   
   lint:
     name: Check Rust code with rustfmt and clippy
