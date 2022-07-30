@@ -35,7 +35,7 @@ jobs:
 
       - name: Install cross
         run: cargo install cross --git https://github.com/cross-rs/cross
-        if: env.NATIVE_TARGET == 'false'
+        if: env.NATIVE_TARGET == false
 
       - uses: Swatinem/rust-cache@v2
 
