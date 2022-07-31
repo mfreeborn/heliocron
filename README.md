@@ -63,7 +63,7 @@ heliocron 0.8.0
 The following code snippet entered into the terminal will wait until sunset on 25th Feb 2020 at the Royal Greenwich Observatory (17:32:17 +00:00)  before listing the files and folders contained within the user's home directory.
 
 ```bash
-$ heliocron --date 2020-02-25 --latitude 51.4769N --longitude 0.0005W \
+$ heliocron --date 2020-02-25 --latitude 51.4769 --longitude -0.0005 \
 wait --event sunset && ls ~
 Thread going to sleep for _ seconds until 2020-02-25 17:32:17 +00:00. Press ctrl+C to cancel.
 ```
@@ -71,7 +71,7 @@ Thread going to sleep for _ seconds until 2020-02-25 17:32:17 +00:00. Press ctrl
 Integration with `cron` for recurring tasks is easy. The following snippet shows a `crontab` entry which will run every morning at 2am. `heliocron` will wait until 30 minutes before sunrise, before allowing the execution of the ``turn-on-lights.sh`` script.
 
 ```bash
-0 2 * * * heliocron --latitude 51.4769N --longitude 0.0005W wait --event sunrise --offset -00:30 \
+0 2 * * * heliocron --latitude 51.4769 --longitude -0.0005 wait --event sunrise --offset -00:30 \
 && turn-on-lights.sh
 ```
 
@@ -80,11 +80,11 @@ Integration with `cron` for recurring tasks is easy. The following snippet shows
 Ever wondered what time sunrise is in Edinburgh on 7th May 2065?
 
 ```bash
-$ heliocron -d 2065-05-07 -l 55.9533N -o 3.1883W report
+$ heliocron -d 2065-05-07 -l 55.9533 -o -3.1883 report
 LOCATION
 --------
-Latitude:  55.9533N
-Longitude: 3.1883W
+Latitude:  55.9533
+Longitude: -3.1883
 
 DATE
 ----
@@ -137,8 +137,8 @@ night
 ```toml
 # ~/.config/heliocron.toml
 # set the default location to Buckingham Palace
-latitude = "51.5014N"
-longitude = "0.1419W"
+latitude = 51.5014
+longitude = -0.1419
 ```
 
 Now, using `heliocron` without providing specific coordinates will yield the following output:
@@ -147,8 +147,8 @@ Now, using `heliocron` without providing specific coordinates will yield the fol
 $ heliocron -d 2020-03-08 report
 LOCATION
 --------
-Latitude: 51.5014N
-Longitude: 0.1419W
+Latitude: 51.5014
+Longitude: -0.1419
 
 DATE
 ----
@@ -175,11 +175,11 @@ Observe that the location is set according to the contents of the configuration 
 Arguments passed in via the command line will override those set in the configuration file. Perhaps we want to check what is happening over at Windsor Castle without changing the configuration file:
 
 ```bash
-$ heliocron -d 2020-03-08 -l 51.4839N -o 0.6044W report
+$ heliocron -d 2020-03-08 -l 51.4839 -o -0.6044 report
 LOCATION
 --------
-Latitude: 51.4839N
-Longitude: 0.6044W
+Latitude: 51.4839
+Longitude: -0.6044
 
 DATE
 ----
@@ -210,7 +210,7 @@ Sometimes, a particular event will never happen on a certain day at a certain lo
 When using the `report` subcommand, this is identified like so:
 
 ```bash
-$ heliocron -d 2020-06-21 -l 52.8300N -o 0.5135E report
+$ heliocron -d 2020-06-21 -l 52.8300 -o 0.5135 report
 <-- snip -->
 Astronomical dawn is at:  Never
 Astronomical dusk is at:  Never
@@ -219,7 +219,7 @@ Astronomical dusk is at:  Never
 When using the `wait` subcommand, an error is raised and the program terminates immediately:
 
 ```bash
-$ heliocron -d 2020-06-21 -l 52.8300N -o 0.5135E wait -e astronomical_dusk
+$ heliocron -d 2020-06-21 -l 52.8300 -o 0.5135 wait -e astronomical_dusk
 Runtime error: The chosen event does not occur on this day.
 ```
 
@@ -228,7 +228,7 @@ Runtime error: The chosen event does not occur on this day.
 If you try and `wait` for an event which happened in the past, an error will be raised and the program will terminate immediately:
 
 ```bash
-$ heliocron -d 2020-06-21 -l 52.8300N -o 0.5135E wait -e sunrise
+$ heliocron -d 2020-06-21 -l 52.8300 -o 0.5135 wait -e sunrise
 Runtime error: The chosen event occurred in the past; cannot wait a negative amount of time.
 ```
 
@@ -248,19 +248,19 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
   Specify the date in ISO 8601 format (YYYY-MM-DD).
 
-* `-l, --latitude` [default: 51.4769N]
+* `-l, --latitude` [default: 51.4769]
 
   Specify the north/south coordinate of the location. If `--latitude` is passed as a command line option, `--longitude` must also be provided.
 
-  Latitude must be a positive number between 0.0 and 90.0, suffixed with either "N" or "S" to determine north or south.
+  Latitude must be specified in decimal degrees - a number between -90.0 and 90.0 where positive is to the north and negative is to the south.
   
   Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)), although note that options provided over the command line take precedence.
 
-* `-o, --longitude` [default: 0.0005W]
+* `-o, --longitude` [default: -0.0005]
 
   Specify the east/west coordinate of the location. If `--longitude` is passed as a command line option, `--latitude` must also be provided. 
 
-  Longitude must be a positive number between 0.0 and 180.0, suffixed with either "E" or "W" to determine east or west.
+  Longitude must be specified in decimal degrees - a number between -180.0 and 180.0 where positive is to the east and negative is to the west.
   
   Can be specified in a file located at ~/.config/heliocron.toml (see [Configuration](#configuration)), although note that options provided over the command line take precedence.
 
@@ -280,7 +280,8 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
     Example:
     ```bash
-    $ heliocron report --json  # note that I have annotated and prettified the output in this example to more clearly show the structure
+    # note that the output has been annotated and prettified in this example to more clearly show the structure
+    $ heliocron report --json  
     {
       "date": "2022-06-11T12:00:00+01:00",  # dates are formatted as rfc3339
       "location": {"latitude": 51.4, "longitude": -5.467},  # coordinates use decimal degree notation 
@@ -325,14 +326,13 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
   * `-a, --altitude` [required if `--event` is one of { `custom_am` | `custom_pm` }]
 
-    Specify the number of degrees that the geometric centre of the Sun is below the horizon when using a `custom_*` event.
+    Specify the number of degrees that the geometric centre of the Sun is below the horizon when using a `custom_*` event. Allowed values are between -90.0 and 90.0.
 
     If this option is passed for any other event, it is simply ignored.
 
     Example:
     ```bash
-    # specify the custom event of Jewish dusk, commonly held to be when the centre of
-    # the Sun is 8.5° below the horizon as it is setting in the evening
+    # specify the custom event of Jewish dusk, commonly held to be when the centre of the Sun is 8.5° below the horizon as it is setting in the evening
     $ heliocron wait --event custom_pm --altitude 8.5
     ```
 
@@ -353,4 +353,4 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 * #### poll
   Display whether the current local time is one of 'day', 'civil_twilight', 'nautical_twilight', 'astronomical_twilight' or 'night'.
 
-  If `--date` is specified as an option, it is ignored in favour of using the current local day.
+  If `--date` is specified as an option, it is ignored in favour of using the current local date.
