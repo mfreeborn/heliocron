@@ -1,6 +1,6 @@
 use std::result;
 
-use chrono::{Duration, Local};
+use chrono::Duration;
 
 use super::{calc, domain, errors, report, utils};
 
@@ -56,44 +56,19 @@ pub async fn wait(
 }
 
 pub fn poll(solar_calculations: calc::SolarCalculations) -> Result<()> {
-    let now = Local::now();
-    let report = report::SolarReport::new(solar_calculations);
+    let solar_elevation = solar_calculations.solar_elevation();
 
-    if let (Some(sunrise), Some(sunset)) = (report.sunrise.0, report.sunset.0) {
-        if now >= sunrise && now < sunset {
-            println!("day");
-            return Ok(());
-        }
-    };
+    if solar_elevation < -18.0 {
+        println!("night")
+    } else if solar_elevation < -12.0 {
+        println!("astronomical_twilight")
+    } else if solar_elevation < -6.0 {
+        println!("nautical_twilight")
+    } else if solar_elevation < 0.833 {
+        println!("civil_twilight")
+    } else {
+        println!("day")
+    }
 
-    if let (Some(civil_dawn), Some(civil_dusk)) = (report.civil_dawn.0, report.civil_dusk.0) {
-        if now >= civil_dawn && now < civil_dusk {
-            println!("civil_twilight");
-            return Ok(());
-        }
-    };
-
-    if let (Some(nautical_dawn), Some(nautical_dusk)) =
-        (report.nautical_dawn.0, report.nautical_dusk.0)
-    {
-        if now >= nautical_dawn && now < nautical_dusk {
-            println!("nautical_twilight");
-            return Ok(());
-        }
-    };
-
-    if let (Some(astronomical_dawn), Some(astronomical_dusk)) =
-        (report.astronomical_dawn.0, report.astronomical_dusk.0)
-    {
-        if now >= astronomical_dawn && now < astronomical_dusk {
-            println!("astronomical_twilight");
-            return Ok(());
-        } else {
-            println!("night");
-            return Ok(());
-        }
-    };
-
-    // TODO: to get here is an error
     Ok(())
 }
