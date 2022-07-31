@@ -9,20 +9,8 @@ use super::{domain, enums, errors::HeliocronError};
 type Result<T, E = HeliocronError> = result::Result<T, E>;
 
 #[derive(Debug, Parser)]
-#[clap(
-    version,
-    about = "\nA utility program for finding out what time various solar events occur, such as sunrise and \
-            sunset, at a given location on a given date. It can be integrated into cron commands to \
-            trigger program execution relative to these events.\n\n\
-            For example, to execute a script 'turn-on-lights.sh' at sunrise, make a Crontab entry to trigger \
-            at a time that will always be before the chosen event (say, 2am) and use heliocron to calculate \
-            and perform the appropriate delay:\n\n\
-            \t0 2 * * * heliocron --latitude 51.47N --longitude 3.1W wait --event sunrise && turn-on-lights.sh"
-)]
+#[clap(version, about, long_about=None)]
 struct Cli {
-    #[clap(subcommand)]
-    subcommand: Command,
-
     /// Set the date for which the calculations should be run. If specified, it should be in 'yyyy-mm-dd' format.
     #[clap(
         short = 'd',
@@ -45,6 +33,9 @@ struct Cli {
     /// otherwise specified here or in ~/.config/heliocron.toml.
     #[clap(short = 'o', long = "longitude", requires = "latitude", allow_hyphen_values = true, value_parser = domain::Longitude::parse)]
     longitude: Option<domain::Longitude>,
+
+    #[clap(subcommand)]
+    subcommand: Command,
 }
 
 #[derive(Debug, Subcommand)]
