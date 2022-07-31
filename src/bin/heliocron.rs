@@ -1,14 +1,14 @@
 use std::process;
 
-use heliocron::{calc, cli, errors, subcommands};
+use heliocron::{calc, cli, domain, errors, subcommands};
 
 async fn run_heliocron() -> Result<(), errors::HeliocronError> {
     let config = cli::parse_config()?;
     let solar_calculations = calc::SolarCalculations::new(config.date, config.coordinates);
 
     match config.action {
-        cli::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
-        cli::Action::Wait {
+        domain::Action::Report { json } => subcommands::display_report(solar_calculations, json)?,
+        domain::Action::Wait {
             event,
             offset,
             run_missed_task,

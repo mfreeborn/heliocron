@@ -44,7 +44,7 @@ fn test_help() {
 
     help.success()
         .stdout(predicates::str::contains("heliocron"))
-        .stdout(predicates::str::contains("A utility"))
+        .stdout(predicates::str::contains("A simple"))
         .stdout(predicates::str::contains("USAGE"))
         .stdout(predicates::str::contains("OPTIONS"));
 }

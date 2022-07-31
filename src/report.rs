@@ -3,7 +3,11 @@ use std::{collections::HashMap, fmt};
 use chrono::{DateTime, Duration, FixedOffset};
 use serde::ser::{Serialize, SerializeStruct};
 
-use super::{calc, domain::Coordinates, enums, structs::EventTime};
+use super::{
+    calc,
+    domain::EventTime,
+    domain::{self, Coordinates},
+};
 
 #[derive(Debug)]
 pub struct SolarReport {
@@ -65,27 +69,34 @@ impl Serialize for SolarReport {
 impl SolarReport {
     pub fn new(solar_calculations: calc::SolarCalculations) -> SolarReport {
         // we can unwrap all of these safely because they have been manually validated against the Events::new constructor
-        let sunrise =
-            solar_calculations.calculate_event_time(enums::Event::new("sunrise", None).unwrap());
-        let sunset =
-            solar_calculations.calculate_event_time(enums::Event::new("sunset", None).unwrap());
-        let civil_dawn =
-            solar_calculations.calculate_event_time(enums::Event::new("civil_dawn", None).unwrap());
-        let civil_dusk =
-            solar_calculations.calculate_event_time(enums::Event::new("civil_dusk", None).unwrap());
-        let nautical_dawn = solar_calculations
-            .calculate_event_time(enums::Event::new("nautical_dawn", None).unwrap());
-        let nautical_dusk = solar_calculations
-            .calculate_event_time(enums::Event::new("nautical_dusk", None).unwrap());
-        let astronomical_dawn = solar_calculations
-            .calculate_event_time(enums::Event::new("astronomical_dawn", None).unwrap());
-        let astronomical_dusk = solar_calculations
-            .calculate_event_time(enums::Event::new("astronomical_dusk", None).unwrap());
+        let sunrise = solar_calculations
+            .event_time(domain::Event::from_event_name(domain::EventName::Sunrise));
+        let sunset = solar_calculations
+            .event_time(domain::Event::from_event_name(domain::EventName::Sunset));
+        let civil_dawn = solar_calculations
+            .event_time(domain::Event::from_event_name(domain::EventName::CivilDawn));
+        let civil_dusk = solar_calculations
+            .event_time(domain::Event::from_event_name(domain::EventName::CivilDusk));
+        let nautical_dawn = solar_calculations.event_time(domain::Event::from_event_name(
+            domain::EventName::NauticalDawn,
+        ));
+        let nautical_dusk = solar_calculations.event_time(domain::Event::from_event_name(
+            domain::EventName::NauticalDusk,
+        ));
+        let astronomical_dawn = solar_calculations.event_time(domain::Event::from_event_name(
+            domain::EventName::AstronomicalDawn,
+        ));
+        let astronomical_dusk = solar_calculations.event_time(domain::Event::from_event_name(
+            domain::EventName::AstronomicalDusk,
+        ));
+        let solar_noon = solar_calculations
+            .event_time(domain::Event::from_event_name(domain::EventName::SolarNoon));
+
         SolarReport {
             date: solar_calculations.date,
             coordinates: solar_calculations.coordinates.clone(),
-            solar_noon: solar_calculations.get_solar_noon(),
-            day_length: solar_calculations.calculate_day_length(),
+            solar_noon,
+            day_length: solar_calculations.day_length(),
             sunrise,
             sunset,
             civil_dawn,

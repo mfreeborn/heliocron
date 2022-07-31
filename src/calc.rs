@@ -1,9 +1,11 @@
 use chrono::{DateTime, Duration, FixedOffset, NaiveTime, TimeZone};
 
-use super::traits::{DateTimeExt, NaiveTimeExt};
-use super::{domain, enums, structs};
+use crate::domain;
+use crate::traits::{DateTimeExt, NaiveTimeExt};
 
 /// Convert a chrono::FixedOffset into a deimal float representation.
+///
+/// For example, +01:30 -> 1.5
 fn offset_to_decimal_float(offset: &FixedOffset) -> f64 {
     offset.local_minus_utc() as f64 / 3600.0
 }
@@ -128,9 +130,9 @@ impl SolarCalculations {
         }
     }
 
-    pub fn get_solar_noon(&self) -> structs::EventTime {
+    pub fn solar_noon(&self) -> domain::EventTime {
         let solar_noon = self.day_fraction_to_datetime(self.solar_noon_fraction);
-        structs::EventTime::new(Some(solar_noon))
+        domain::EventTime::new(Some(solar_noon))
     }
 
     fn day_fraction_to_datetime(&self, mut day_fraction: f64) -> DateTime<FixedOffset> {
@@ -153,10 +155,7 @@ impl SolarCalculations {
             second_fraction.trunc() as u32,
         );
 
-        // Creating the datetime using the UTC offset, before updating the timezone to the one set by
-        // the user, is necessary so that the calculations and timezones all match up.
-        // These are all safe to unwrap because we are taking the values from a valid NaiveTime.
-
+        // Safe to unwrap because we got this date from naive_local() just earlier
         self.date
             .offset()
             .from_local_date(&date.date())
@@ -164,8 +163,8 @@ impl SolarCalculations {
             .unwrap()
     }
 
-    fn calculate_hour_angle(&self, degrees_below_horizon: f64) -> Option<f64> {
-        let event_angle = degrees_below_horizon + 90.0;
+    fn hour_angle(&self, degrees_below_horizon: domain::Altitude) -> Option<f64> {
+        let event_angle = *degrees_below_horizon + 90.0;
         let hour_angle = (((event_angle.to_radians().cos()
             / (self.coordinates.latitude.to_radians().cos()
                 * self.solar_declination.to_radians().cos()))
@@ -180,78 +179,43 @@ impl SolarCalculations {
         }
     }
 
-    pub fn calculate_event_time(&self, event: enums::Event) -> structs::EventTime {
-        let (degrees_below_horizon, time_of_day) = match event {
-            enums::Event::Sunrise {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::Sunset {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::CivilDawn {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::CivilDusk {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::NauticalDawn {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::NauticalDusk {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::AstronomicalDawn {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::AstronomicalDusk {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::CustomAM {
-                degrees_below_horizon,
-                time_of_day,
-            }
-            | enums::Event::CustomPM {
-                degrees_below_horizon,
-                time_of_day,
-            } => (degrees_below_horizon, time_of_day),
-            // we call this method having already matched against the above events
-            _ => unreachable!(),
-        };
+    pub fn event_time(&self, event: domain::Event) -> domain::EventTime {
+        match event {
+            domain::Event::Fixed(event) => {
+                let hour_angle = self.hour_angle(event.degrees_below_horizon);
 
-        let hour_angle = self.calculate_hour_angle(degrees_below_horizon);
+                match hour_angle {
+                    Some(hour_angle) => {
+                        let day_fraction = match event.solar_direction {
+                            domain::Direction::Ascending => {
+                                self.solar_noon_fraction - (hour_angle / 360.0)
+                            }
+                            domain::Direction::Descending => {
+                                self.solar_noon_fraction + (hour_angle / 360.0)
+                            }
+                        };
 
-        match hour_angle {
-            Some(hour_angle) => {
-                let day_fraction = match time_of_day {
-                    enums::TimeOfDay::AM => self.solar_noon_fraction - (hour_angle / 360.0),
-                    enums::TimeOfDay::PM => self.solar_noon_fraction + (hour_angle / 360.0),
-                };
+                        let event_time = self.day_fraction_to_datetime(day_fraction);
 
-                let event_time = self.day_fraction_to_datetime(day_fraction);
-
-                structs::EventTime::new(Some(event_time))
+                        domain::EventTime::new(Some(event_time))
+                    }
+                    None => domain::EventTime::new(None),
+                }
             }
-            None => structs::EventTime::new(None),
+            domain::Event::Variable(event) => match event {
+                domain::VariableElevationEvent::SolarNoon => self.solar_noon(),
+            },
         }
     }
 
-    pub fn calculate_day_length(&self) -> Duration {
-        // we can unwrap here safely because we have manually validated these calls with the Event::new constructor
-        let sunrise = self.calculate_event_time(enums::Event::new("sunrise", None).unwrap());
-        let sunset = self.calculate_event_time(enums::Event::new("sunset", None).unwrap());
+    pub fn day_length(&self) -> Duration {
+        let sunrise = self.event_time(domain::Event::from_event_name(domain::EventName::Sunrise));
+        let sunset = self.event_time(domain::Event::from_event_name(domain::EventName::Sunset));
 
         match (sunrise.0, sunset.0) {
             (Some(sunrise), Some(sunset)) => sunset - sunrise,
             _ => {
-                let max_solar_elevation = self.calculate_max_solar_elevation();
+                let max_solar_elevation = self.max_solar_elevation();
                 // There is no sunrise/sunset, and Sun reaches the defintion for sunrise (0.833 degrees above
                 // horizon), therefore it must never set.
                 if max_solar_elevation >= 0.833 {
@@ -265,9 +229,9 @@ impl SolarCalculations {
 
     /// Returns the solar elevation angle when the solar azimuth is at 180 degrees in the north or 0 degrees in
     /// the south, corrected for atmospheric refraction.
-    fn calculate_max_solar_elevation(&self) -> f64 {
+    fn max_solar_elevation(&self) -> f64 {
         // Safe to unwrap as there is always a solar noon.
-        let date = self.get_solar_noon().0.unwrap();
+        let date = self.solar_noon().0.unwrap();
         SolarCalculations::new(date, self.coordinates.clone()).corrected_solar_elevation_angle
     }
 }
@@ -396,7 +360,7 @@ mod tests {
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 
-        let day_length = solar_calculations.calculate_day_length().num_seconds();
+        let day_length = solar_calculations.day_length().num_seconds();
         let expected = 45113;
 
         assert_eq!(day_length, expected);
@@ -413,7 +377,7 @@ mod tests {
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 
-        let day_length = solar_calculations.calculate_day_length().num_seconds();
+        let day_length = solar_calculations.day_length().num_seconds();
         let expected = 0;
 
         assert_eq!(day_length, expected);
@@ -430,7 +394,7 @@ mod tests {
 
         let solar_calculations = SolarCalculations::new(date, coordinates);
 
-        let day_length = solar_calculations.calculate_day_length().num_seconds();
+        let day_length = solar_calculations.day_length().num_seconds();
         let expected = 86400;
 
         assert_eq!(day_length, expected);
