@@ -106,6 +106,30 @@ Astronomical dawn is at:  Never
 Astronomical dusk is at:  Never
 ```
 
+### Display whether it is currently day, night or twilight
+
+```bash
+# let's say it is currently 31st July 2022 12:00 local time
+$ heliocron -l 55.9533 -o -3.1883 poll
+day
+
+# now suppose it is 21:30
+$ heliocron -l 55.9533 -o -3.1883 poll
+civil_twilight
+
+# and 22:30
+$ heliocron -l 55.9533 -o -3.1883 poll
+nautical_twilight
+
+# and 23:59
+$ heliocron -l 55.9533 -o -3.1883 poll
+astronomical_twilight
+
+# and now 23:59 slightly further south
+$ heliocron -l 50.9533 -o -3.1883 poll
+night
+```
+
 ## Configuration
 
 `heliocron` supports reading some configuration options from a file located at ~/.config/heliocron.toml. Note that this file is not created by default, it is up to the user to create the file correctly, otherwise `heliocron` will simply pass over it. In particular, you can set a default latitude and longitude (must provide both, otherwise it will fall back to the default location of the Royal Greenwich Observatory).
@@ -325,3 +349,8 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     Allows specifying a custom string to describe or otherwise tag the process. When viewing all running processes, e.g. with `htop`, it will then be possible to filter against this tag as it appears on the command line.
 
     This option has no other effect on the running of the program.
+
+* #### poll
+  Display whether the current local time is one of 'day', 'civil_twilight', 'nautical_twilight', 'astronomical_twilight' or 'night'.
+
+  If `--date` is specified as an option, it is ignored in favour of using the current local day.

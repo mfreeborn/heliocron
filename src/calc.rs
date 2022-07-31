@@ -130,6 +130,10 @@ impl SolarCalculations {
         }
     }
 
+    pub fn solar_elevation(&self) -> f64 {
+        self.corrected_solar_elevation_angle
+    }
+
     pub fn solar_noon(&self) -> domain::EventTime {
         let solar_noon = self.day_fraction_to_datetime(self.solar_noon_fraction);
         domain::EventTime::new(Some(solar_noon))

@@ -54,3 +54,21 @@ pub async fn wait(
         )),
     }
 }
+
+pub fn poll(solar_calculations: calc::SolarCalculations) -> Result<()> {
+    let solar_elevation = solar_calculations.solar_elevation();
+
+    if solar_elevation < -18.0 {
+        println!("night")
+    } else if solar_elevation < -12.0 {
+        println!("astronomical_twilight")
+    } else if solar_elevation < -6.0 {
+        println!("nautical_twilight")
+    } else if solar_elevation < 0.833 {
+        println!("civil_twilight")
+    } else {
+        println!("day")
+    }
+
+    Ok(())
+}

@@ -85,6 +85,9 @@ pub enum Command {
         #[clap(long = "run-missed-event")]
         run_missed_task: bool,
     },
+
+    /// Display the phase of day or night for the current local time
+    Poll {},
 }
 
 fn parse_offset(offset: &str) -> Result<Duration, String> {
@@ -174,14 +177,20 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
         }
     };
 
-    let date = cli_args
-        .time_zone
-        .ymd(
-            cli_args.date.year(),
-            cli_args.date.month(),
-            cli_args.date.day(),
-        )
-        .and_hms(12, 0, 0);
+    let date = match cli_args.subcommand {
+        Command::Poll {} => {
+            let today = Local::now();
+            today.with_timezone(today.offset())
+        }
+        _ => cli_args
+            .time_zone
+            .ymd(
+                cli_args.date.year(),
+                cli_args.date.month(),
+                cli_args.date.day(),
+            )
+            .and_hms(12, 0, 0),
+    };
 
     let action = match cli_args.subcommand {
         Command::Report { json } => domain::Action::Report { json },
@@ -220,6 +229,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
                 run_missed_task,
             }
         }
+        Command::Poll {} => domain::Action::Poll,
     };
 
     Ok(Config {
@@ -231,9 +241,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
 
 fn parse_local_config(path: &PathBuf) -> Result<domain::Coordinates, String> {
     let config_file = fs::read(path).map_err(|_| "Failed to read config file path".to_string())?;
-    let toml_config = toml::from_slice::<RawFileConfig>(&config_file).map_err(
-        |e| e.to_string(), // "Failed to parse TOML file".to_string()
-    )?;
+    let toml_config = toml::from_slice::<RawFileConfig>(&config_file).map_err(|e| e.to_string())?;
 
     let (lat, lon) = match (toml_config.latitude, toml_config.longitude) {
         (Some(lat), Some(lon)) => Ok((lat, lon)),
