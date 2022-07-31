@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v0.8.0] - 2022-xx-xx
+### Added
+- `poll` subcommand - when executed, will return whether it is day, night or twilight ([#54](https://github.com/mfreeborn/heliocron/issues/54)).
+
 ### Fixed
 - More time zone errors... more tests added to prove correctness ([#53](https://github.com/mfreeborn/heliocron/issues/53)).
 - Errors when running integration tests using `rust-cross` ([#58](https://github.com/mfreeborn/heliocron/issues/58))
