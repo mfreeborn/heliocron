@@ -14,6 +14,7 @@ pub enum Action {
         offset: Duration,
         run_missed_task: bool,
     },
+    Poll,
 }
 
 /// A newtype representing an optional datetime.

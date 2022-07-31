@@ -12,9 +12,8 @@ async fn run_heliocron() -> Result<(), errors::HeliocronError> {
             event,
             offset,
             run_missed_task,
-        } => {
-            subcommands::wait(event, offset, solar_calculations, run_missed_task).await?;
-        }
+        } => subcommands::wait(event, offset, solar_calculations, run_missed_task).await?,
+        domain::Action::Poll => subcommands::poll(solar_calculations)?,
     }
     Ok(())
 }

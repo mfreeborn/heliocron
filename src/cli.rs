@@ -85,6 +85,9 @@ pub enum Command {
         #[clap(long = "run-missed-event")]
         run_missed_task: bool,
     },
+
+    /// Display the phase of day or night for the current local time
+    Poll {},
 }
 
 fn parse_offset(offset: &str) -> Result<Duration, String> {
@@ -220,6 +223,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
                 run_missed_task,
             }
         }
+        Command::Poll {} => domain::Action::Poll,
     };
 
     Ok(Config {

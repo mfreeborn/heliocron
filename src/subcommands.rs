@@ -1,6 +1,6 @@
 use std::result;
 
-use chrono::Duration;
+use chrono::{Duration, Local};
 
 use super::{calc, domain, errors, report, utils};
 
@@ -53,4 +53,47 @@ pub async fn wait(
             errors::RuntimeErrorKind::NonOccurringEvent,
         )),
     }
+}
+
+pub fn poll(solar_calculations: calc::SolarCalculations) -> Result<()> {
+    let now = Local::now();
+    let report = report::SolarReport::new(solar_calculations);
+
+    if let (Some(sunrise), Some(sunset)) = (report.sunrise.0, report.sunset.0) {
+        if now >= sunrise && now < sunset {
+            println!("day");
+            return Ok(());
+        }
+    };
+
+    if let (Some(civil_dawn), Some(civil_dusk)) = (report.civil_dawn.0, report.civil_dusk.0) {
+        if now >= civil_dawn && now < civil_dusk {
+            println!("civil_twilight");
+            return Ok(());
+        }
+    };
+
+    if let (Some(nautical_dawn), Some(nautical_dusk)) =
+        (report.nautical_dawn.0, report.nautical_dusk.0)
+    {
+        if now >= nautical_dawn && now < nautical_dusk {
+            println!("nautical_twilight");
+            return Ok(());
+        }
+    };
+
+    if let (Some(astronomical_dawn), Some(astronomical_dusk)) =
+        (report.astronomical_dawn.0, report.astronomical_dusk.0)
+    {
+        if now >= astronomical_dawn && now < astronomical_dusk {
+            println!("astronomical_twilight");
+            return Ok(());
+        } else {
+            println!("night");
+            return Ok(());
+        }
+    };
+
+    // TODO: to get here is an error
+    Ok(())
 }
