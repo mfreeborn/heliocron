@@ -127,27 +127,16 @@ fn parse_tz(tz: &str) -> Result<chrono::FixedOffset, String> {
 }
 
 #[derive(Debug, Deserialize)]
-struct TomlConfig {
+struct RawFileConfig {
     latitude: Option<f64>,
     longitude: Option<f64>,
-}
-
-pub enum Action {
-    Report {
-        json: bool,
-    },
-    Wait {
-        event: domain::Event,
-        offset: Duration,
-        run_missed_task: bool,
-    },
 }
 
 /// Container for all necessary runtime configuration.
 pub struct Config {
     pub coordinates: domain::Coordinates,
     pub date: DateTime<FixedOffset>,
-    pub action: Action,
+    pub action: domain::Action,
 }
 
 /// Parse all configuration streams into one valid runtime configuration. Where supported, arguments passed over the
@@ -195,7 +184,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
         .and_hms(12, 0, 0);
 
     let action = match cli_args.subcommand {
-        Command::Report { json } => Action::Report { json },
+        Command::Report { json } => domain::Action::Report { json },
         Command::Wait {
             event_name,
             offset,
@@ -225,7 +214,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
 
             let event = domain::Event::from_event_name(event);
 
-            Action::Wait {
+            domain::Action::Wait {
                 event,
                 offset,
                 run_missed_task,
@@ -242,7 +231,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
 
 fn parse_local_config(path: &PathBuf) -> Result<domain::Coordinates, String> {
     let config_file = fs::read(path).map_err(|_| "Failed to read config file path".to_string())?;
-    let toml_config = toml::from_slice::<TomlConfig>(&config_file).map_err(
+    let toml_config = toml::from_slice::<RawFileConfig>(&config_file).map_err(
         |e| e.to_string(), // "Failed to parse TOML file".to_string()
     )?;
 
@@ -257,34 +246,4 @@ fn parse_local_config(path: &PathBuf) -> Result<domain::Coordinates, String> {
     let lon = domain::Longitude::new(lon)?;
 
     Ok(domain::Coordinates::new(lat, lon))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_offset() {
-        let valid_offsets = &[
-            ("12:00:00", Duration::hours(12)),
-            ("12:00", Duration::hours(12)),
-            ("-12:00:00", -Duration::hours(12)),
-            ("23:59:59", Duration::seconds(86399)),
-            ("23:59", Duration::seconds(86340)),
-            ("00:59", Duration::minutes(59)),
-            ("00:00", Duration::minutes(0)),
-        ];
-
-        for (input, expected) in valid_offsets.iter() {
-            let offset = parse_offset(*input);
-            assert_eq!(offset, Ok(*expected));
-        }
-
-        let invalid_offsets = &["24:00:00"];
-
-        for input in invalid_offsets.iter() {
-            let offset = parse_offset(*input);
-            assert!(offset.is_err());
-        }
-    }
 }

@@ -1,8 +1,20 @@
 use std::fmt;
 use std::ops::RangeInclusive;
 
-use chrono::{DateTime, FixedOffset, NaiveTime};
+use chrono::{DateTime, Duration, FixedOffset, NaiveTime};
 use serde::Serialize;
+
+// An enumeration of parsed commands.
+pub enum Action {
+    Report {
+        json: bool,
+    },
+    Wait {
+        event: Event,
+        offset: Duration,
+        run_missed_task: bool,
+    },
+}
 
 /// A newtype representing an optional datetime.
 ///
