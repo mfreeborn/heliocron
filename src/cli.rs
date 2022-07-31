@@ -4,7 +4,7 @@ use chrono::{DateTime, Datelike, Duration, FixedOffset, Local, NaiveDate, NaiveT
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
 
-use super::{domain, enums, errors::HeliocronError};
+use super::{domain, errors::HeliocronError};
 
 type Result<T, E = HeliocronError> = result::Result<T, E>;
 
@@ -51,12 +51,8 @@ pub enum Command {
     /// Set a delay timer which will expire when the chosen event (+/- optional offset) occurs
     Wait {
         /// Choose an event from which to base the delay
-        #[clap(
-            short = 'e',
-            long = "event", 
-            possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk", "custom_am", "custom_pm", "solar_noon"]
-        )]
-        event_name: String,
+        #[clap(short = 'e', long = "event", value_enum)]
+        event_name: domain::RawEventName,
 
         /// Choose a delay from your chosen event (see --event) in one of the following formats: {'HH:MM:SS' | 'HH:MM'}. The value may be prepended with '-' to make it negative.
         /// A negative offset will set the delay to be before the event, whilst a positive offset will set the delay to be after the event
@@ -69,16 +65,16 @@ pub enum Command {
         )]
         offset: Duration,
 
-        /// Set the elevation of the centre of the Sun relative to the horizon. Positive values mean that the centre of the Sun is below the horizon, whilst
+        /// Set the elevation of the centre of the Sun relative to the horizon, between -90.0 and 90.0. Positive values mean that the centre of the Sun is below the horizon, whilst
         /// negative values mean that the centre of the sun is above the horizon. This argument is ignored if not specifying a custom event
         #[clap(
             short = 'a',
             long = "altitude",
             allow_hyphen_values = true,
-            parse(try_from_str=parse_altitude),
+            value_parser = domain::Altitude::parse,
             required_if_eq_any = &[("event-name", "custom_am"), ("event-name", "custom_pm")]
         )]
-        custom_altitude: Option<f64>,
+        custom_altitude: Option<domain::Altitude>,
 
         /// Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program
         #[clap(long = "tag")]
@@ -114,17 +110,6 @@ fn parse_offset(offset: &str) -> Result<Duration, String> {
     }
 }
 
-fn parse_altitude(altitude: &str) -> Result<f64, String> {
-    let altitude = altitude
-        .parse::<f64>()
-        .map_err(|_e| "Expected a number between -90.0 and 90.0".to_string())?;
-    if (-90.0..=90.0).contains(&altitude) {
-        Ok(altitude)
-    } else {
-        Err("Expected a number between -90.0 and 90.0".to_string())
-    }
-}
-
 fn parse_date(date: &str) -> Result<NaiveDate, String> {
     NaiveDate::parse_from_str(date, "%Y-%m-%d")
         .map_err(|_| format!("Invalid date - must be in the format 'yyyy-mm-dd'. Found '{date}'"))
@@ -147,20 +132,18 @@ struct TomlConfig {
     longitude: Option<f64>,
 }
 
-#[derive(Debug, Clone)]
 pub enum Action {
     Report {
         json: bool,
     },
     Wait {
-        event: enums::Event,
+        event: domain::Event,
         offset: Duration,
         run_missed_task: bool,
     },
 }
 
 /// Container for all necessary runtime configuration.
-#[derive(Debug, Clone)]
 pub struct Config {
     pub coordinates: domain::Coordinates,
     pub date: DateTime<FixedOffset>,
@@ -219,11 +202,35 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
             run_missed_task,
             custom_altitude,
             ..
-        } => Action::Wait {
-            event: enums::Event::new(event_name.as_str(), custom_altitude).unwrap(),
-            offset,
-            run_missed_task,
-        },
+        } => {
+            let event = match event_name {
+                domain::RawEventName::Sunrise => domain::EventName::Sunrise,
+                domain::RawEventName::Sunset => domain::EventName::Sunset,
+                domain::RawEventName::CivilDawn => domain::EventName::CivilDawn,
+                domain::RawEventName::CivilDusk => domain::EventName::CivilDusk,
+                domain::RawEventName::NauticalDawn => domain::EventName::NauticalDawn,
+                domain::RawEventName::NauticalDusk => domain::EventName::NauticalDusk,
+                domain::RawEventName::AstronomicalDawn => domain::EventName::AstronomicalDawn,
+                domain::RawEventName::AstronomicalDusk => domain::EventName::AstronomicalDusk,
+                domain::RawEventName::SolarNoon => domain::EventName::SolarNoon,
+                // These two custom_altitudes are safe to unwrap because clap already validates
+                // that custom_altitude is present when the event is custom_{am | pm}.
+                domain::RawEventName::CustomAM => {
+                    domain::EventName::CustomAM(custom_altitude.unwrap())
+                }
+                domain::RawEventName::CustomPM => {
+                    domain::EventName::CustomPM(custom_altitude.unwrap())
+                }
+            };
+
+            let event = domain::Event::from_event_name(event);
+
+            Action::Wait {
+                event,
+                offset,
+                run_missed_task,
+            }
+        }
     };
 
     Ok(Config {

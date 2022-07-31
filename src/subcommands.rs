@@ -2,7 +2,7 @@ use std::result;
 
 use chrono::Duration;
 
-use super::{calc, enums, errors, report, utils};
+use super::{calc, domain, errors, report, utils};
 
 type Result<T> = result::Result<T, errors::HeliocronError>;
 
@@ -18,15 +18,12 @@ pub fn display_report(solar_calculations: calc::SolarCalculations, json: bool) -
 }
 
 pub async fn wait(
-    event: enums::Event,
+    event: domain::Event,
     offset: Duration,
     solar_calculations: calc::SolarCalculations,
     run_missed_task: bool,
 ) -> Result<()> {
-    let event_time = match event {
-        enums::Event::SolarNoon => solar_calculations.get_solar_noon(),
-        _ => solar_calculations.calculate_event_time(event),
-    };
+    let event_time = solar_calculations.event_time(event);
 
     match event_time.0 {
         Some(datetime) => {

@@ -1,11 +1,8 @@
 pub mod calc;
 pub mod cli;
 pub mod domain;
-pub mod enums;
 pub mod errors;
-pub mod parsers;
 pub mod report;
-pub mod structs;
 pub mod subcommands;
 pub mod traits;
 pub mod utils;
