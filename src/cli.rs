@@ -8,10 +8,11 @@ use super::{domain, enums, errors::HeliocronError};
 
 type Result<T, E = HeliocronError> = result::Result<T, E>;
 
-#[derive(Debug, Parser)]
-#[clap(version, about, long_about=None)]
+#[derive(Parser)]
+#[clap(version, about)]
 struct Cli {
-    /// Set the date for which the calculations should be run. If specified, it should be in 'yyyy-mm-dd' format.
+    /// Set the date for which the calculations should be run. If specified, it should be in 'yyyy-mm-dd' format, otherwise it defaults
+    /// to the the current local date
     #[clap(
         short = 'd',
         long = "date",
@@ -20,17 +21,17 @@ struct Cli {
     )]
     date: NaiveDate,
 
-    /// Set the time zone. If specified, it should be in the format '[+/-]HH:MM', otherwise it defaults to the current local time zone.
+    /// Set the time zone. If specified, it should be in the format '[+/-]HH:MM', otherwise it defaults to the current local time zone
     #[clap(short = 't', long = "time-zone", allow_hyphen_values = true, value_parser=parse_tz, default_value_t=*Local::today().offset())]
     time_zone: FixedOffset,
 
     /// Set the latitude in decimal degrees. Positive values to the north; negative values to the south. Defaults to '51.4769' if not
-    /// otherwise specified here or in ~.config/heliocron.toml.
+    /// otherwise specified here or in ~/.config/heliocron.toml.
     #[clap(short = 'l', long = "latitude", requires = "longitude", allow_hyphen_values = true, value_parser = domain::Latitude::parse)]
     latitude: Option<domain::Latitude>,
 
-    /// Set the longitude in decimal degrees. Positive values to the east; negative values to the west. Defaults to -0.0005 if not
-    /// otherwise specified here or in ~/.config/heliocron.toml.
+    /// Set the longitude in decimal degrees. Positive values to the east; negative values to the west. Defaults to '-0.0005' if not
+    /// otherwise specified here or in ~/.config/heliocron.toml
     #[clap(short = 'o', long = "longitude", requires = "latitude", allow_hyphen_values = true, value_parser = domain::Longitude::parse)]
     longitude: Option<domain::Longitude>,
 
@@ -38,27 +39,28 @@ struct Cli {
     subcommand: Command,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Subcommand)]
 pub enum Command {
+    /// Produce a full set of sunrise, sunset and other related times for the given date and location
     Report {
-        #[clap(
-            help = "Set the output format to machine-readable JSON. If this flag is not present, the report will be displayed in the terminal as a block of human-readable text.",
-            long = "json"
-        )]
+        /// Set the output format to machine-readable JSON. If this flag is not present, the report will be displayed in the terminal as a block of human-readable text
+        #[clap(long = "json")]
         json: bool,
     },
 
+    /// Set a delay timer which will expire when the chosen event (+/- optional offset) occurs
     Wait {
+        /// Choose an event from which to base the delay
         #[clap(
-            help = "Choose an event from which to base your delay.", 
             short = 'e',
             long = "event", 
             possible_values = &["sunrise", "sunset", "civil_dawn", "civil_dusk", "nautical_dawn", "nautical_dusk", "astronomical_dawn", "astronomical_dusk", "custom_am", "custom_pm", "solar_noon"]
         )]
         event_name: String,
 
+        /// Choose a delay from your chosen event (see --event) in one of the following formats: {'HH:MM:SS' | 'HH:MM'}. The value may be prepended with '-' to make it negative.
+        /// A negative offset will set the delay to be before the event, whilst a positive offset will set the delay to be after the event
         #[clap(
-            help = "Choose a delay from your chosen event (see --event) in one of the following formats: {HH:MM:SS | HH:MM}. The value may be prepended with '-' to make it negative. A negative offset will set the delay to be before the event, whilst a positive offset will set the delay to be after the event.",
             short = 'o',
             long = "offset",
             default_value = "00:00:00",
@@ -67,8 +69,9 @@ pub enum Command {
         )]
         offset: Duration,
 
+        /// Set the elevation of the centre of the Sun relative to the horizon. Positive values mean that the centre of the Sun is below the horizon, whilst
+        /// negative values mean that the centre of the sun is above the horizon. This argument is ignored if not specifying a custom event
         #[clap(
-            help = "Set the elevation of the centre of the Sun relative to the horizon. Positive values mean that the centre of the Sun is below the horizon, whilst negative values mean that the centre of the sun is above the horizon. This argument is ignored if not specifying a custom event.",
             short = 'a',
             long = "altitude",
             allow_hyphen_values = true,
@@ -77,16 +80,13 @@ pub enum Command {
         )]
         custom_altitude: Option<f64>,
 
-        #[clap(
-            long = "tag",
-            help = "Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program."
-        )]
+        /// Add a short description to help identify the process e.g. when using htop. This parameter has no other effect on the running of the program
+        #[clap(long = "tag")]
         tag: Option<String>,
 
-        #[clap(
-            help = "Define whether the task should still be run even if the event has been missed. A tolerance of 30 seconds after the event is allowed before a task would be skipped. Setting this flag will cause the task to run regardless of how overdue it is.",
-            long = "run-missed-event"
-        )]
+        /// Define whether the task should still be run even if the event has been missed. A tolerance of 30 seconds after the event is allowed before a task
+        /// would be skipped. Setting this flag will cause the task to run regardless of how overdue it is
+        #[clap(long = "run-missed-event")]
         run_missed_task: bool,
     },
 }
