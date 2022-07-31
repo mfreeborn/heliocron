@@ -1,6 +1,6 @@
 [package]
 name = "heliocron"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Michael Freeborn <michaelfreeborn1@gmail.com>"]
 description = "A simple program for calculating sunrise, sunset and related times, which can be integrated with cron to trigger other programs to run when these events occur"
 documentation = "https://github.com/mfreeborn/heliocron"

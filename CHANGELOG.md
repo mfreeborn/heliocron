@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched from pseudo-decimal degrees (e.g. "5.1N") to actual decimal degrees (e.g. 5.1) for coordinates ([#56](https://github.com/mfreeborn/heliocron/issues/56)).
 - Refactored Github Actions workflows
 
-## [v0.7.0] - 2022-06-12
+## [v0.8.0] - 2022-06-12
 ### Fixed
 - Fixed handling of time zones so that they are now implemented properly ([#41](https://github.com/mfreeborn/heliocron/issues/41)).
 
