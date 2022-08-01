@@ -149,7 +149,8 @@ impl std::ops::Deref for Altitude {
 }
 
 /// A list of plain event names supported by the command line interface.
-#[derive(Clone)]
+#[derive(Clone, clap::ValueEnum)]
+#[clap(rename_all = "snake_case")]
 pub enum RawEventName {
     Sunrise,
     Sunset,
@@ -162,40 +163,6 @@ pub enum RawEventName {
     CustomAM,
     CustomPM,
     SolarNoon,
-}
-
-impl clap::ValueEnum for RawEventName {
-    fn value_variants<'a>() -> &'a [Self] {
-        &[
-            Self::Sunrise,
-            Self::Sunset,
-            Self::CivilDawn,
-            Self::CivilDusk,
-            Self::NauticalDawn,
-            Self::NauticalDusk,
-            Self::AstronomicalDawn,
-            Self::AstronomicalDusk,
-            Self::CustomAM,
-            Self::CustomPM,
-            Self::SolarNoon,
-        ]
-    }
-
-    fn to_possible_value<'a>(&self) -> ::std::option::Option<clap::PossibleValue<'a>> {
-        match self {
-            Self::Sunrise => Some(clap::PossibleValue::new("sunrise")),
-            Self::Sunset => Some(clap::PossibleValue::new("sunset")),
-            Self::CivilDawn => Some(clap::PossibleValue::new("civil_dawn")),
-            Self::CivilDusk => Some(clap::PossibleValue::new("civil_dusk")),
-            Self::NauticalDawn => Some(clap::PossibleValue::new("nautical_dawn")),
-            Self::NauticalDusk => Some(clap::PossibleValue::new("nautical_dusk")),
-            Self::AstronomicalDawn => Some(clap::PossibleValue::new("astronomical_dawn")),
-            Self::AstronomicalDusk => Some(clap::PossibleValue::new("astronomical_dusk")),
-            Self::CustomAM => Some(clap::PossibleValue::new("custom_am")),
-            Self::CustomPM => Some(clap::PossibleValue::new("custom_pm")),
-            Self::SolarNoon => Some(clap::PossibleValue::new("solar_noon")),
-        }
-    }
 }
 
 /// An enumeration of possible event names, with required data attached.
