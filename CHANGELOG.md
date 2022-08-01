@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.8.0] - 2022-xx-xx
+## [v0.8.1] - 2022-08-01
+### Added
+- add `--watch` and `--json` to an overall much enhanced `poll` subcommand.
+
+## [v0.8.0] - 2022-07-31
 ### Added
 - `poll` subcommand - when executed, will return whether it is day, night or twilight ([#54](https://github.com/mfreeborn/heliocron/issues/54)).
 
@@ -16,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Switched from pseudo-decimal degrees (e.g. "5.1N") to actual decimal degrees (e.g. 5.1) for coordinates ([#56](https://github.com/mfreeborn/heliocron/issues/56)).
 - Refactored Github Actions workflows
 
-## [v0.8.0] - 2022-06-12
+## [v0.8.1] - 2022-06-12
 ### Fixed
 - Fixed handling of time zones so that they are now implemented properly ([#41](https://github.com/mfreeborn/heliocron/issues/41)).
 
