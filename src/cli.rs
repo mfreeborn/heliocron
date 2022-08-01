@@ -86,8 +86,16 @@ pub enum Command {
         run_missed_task: bool,
     },
 
-    /// Display the phase of day or night for the current local time
-    Poll {},
+    /// Display real time data pertaining to the Sun at the current local time
+    Poll {
+        /// Run the program constantly, updating the values every second
+        #[clap(long = "watch")]
+        watch: bool,
+
+        /// Set the output format to machine-readable JSON. If this flag is not present, the report will be displayed in the terminal as a block of human-readable text
+        #[clap(long = "json")]
+        json: bool,
+    },
 }
 
 fn parse_offset(offset: &str) -> Result<Duration, String> {
@@ -178,9 +186,9 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
     };
 
     let date = match cli_args.subcommand {
-        Command::Poll {} => {
-            let today = Local::now();
-            today.with_timezone(today.offset())
+        Command::Poll { .. } => {
+            let now = Local::now();
+            now.with_timezone(now.offset())
         }
         _ => cli_args
             .time_zone
@@ -229,7 +237,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
                 run_missed_task,
             }
         }
-        Command::Poll {} => domain::Action::Poll,
+        Command::Poll { watch, json } => domain::Action::Poll { watch, json },
     };
 
     Ok(Config {
