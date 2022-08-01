@@ -11,6 +11,7 @@ categories = ["command-line-utilities", "date-and-time"]
 readme = "README.md"
 license = "Apache-2.0 OR MIT"
 edition = "2021"
+exclude = ["assets/"]
 
 [badges]
 maintenance = { status = "actively-developed" }
