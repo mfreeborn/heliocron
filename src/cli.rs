@@ -86,7 +86,7 @@ pub enum Command {
         run_missed_task: bool,
     },
 
-    /// Display the phase of day or night for the current local time
+    /// Display real time data pertaining to the Sun at the current local time
     Poll {
         /// Run the program constantly, updating the values every second
         #[clap(long = "watch")]

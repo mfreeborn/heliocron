@@ -2,7 +2,7 @@ use std::io::Write;
 use std::result;
 
 use chrono::{Duration, Local};
-use crossterm::{cursor, terminal, QueueableCommand};
+use crossterm::{cursor, terminal, ExecutableCommand, QueueableCommand};
 
 use super::{calc, domain, errors, report, utils};
 
@@ -69,12 +69,13 @@ pub fn poll(solar_calculations: calc::SolarCalculations, watch: bool, json: bool
         println!("{output}");
     } else {
         if !json {
-            println!("Dispalying solar calculations in real time. Press ctrl+C to cancel.\n");
+            println!("Displaying solar calculations in real time. Press ctrl+C to cancel.\n");
         }
 
         // Set up stdout and make a record of the current cursor location. We unwrap
         let mut stdout = std::io::stdout();
         stdout.queue(cursor::SavePosition).unwrap();
+        stdout.execute(cursor::Hide).unwrap();
 
         loop {
             if json {

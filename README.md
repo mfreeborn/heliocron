@@ -77,8 +77,6 @@ Integration with `cron` for recurring tasks is easy. The following snippet shows
 
 ### Show a report of sunrise and sunset times for a given location and date
 
-Ever wondered what time sunrise is in Edinburgh on 7th May 2065?
-
 ```bash
 $ heliocron -d 2065-05-07 -l 55.9533 -o -3.1883 report
 LOCATION
@@ -106,29 +104,34 @@ Astronomical dawn is at:  Never
 Astronomical dusk is at:  Never
 ```
 
-### Display whether it is currently day, night or twilight
+### Display real time data pertaining to the current position of the Sun
+Use the `poll` subcommand to see what the Sun is doing right now:
 
 ```bash
-# let's say it is currently 31st July 2022 12:00 local time
-$ heliocron -l 55.9533 -o -3.1883 poll
-day
+$ heliocron -l 51.4769 -o -0.0005 poll
+LOCATION
+--------
+Latitude:  51.4769
+Longitude: -0.0005
 
-# now suppose it is 21:30
-$ heliocron -l 55.9533 -o -3.1883 poll
-civil_twilight
+DATE
+----
+2022-08-01 05:21:38 +01:00
+Civil Twilight
 
-# and 22:30
-$ heliocron -l 55.9533 -o -3.1883 poll
-nautical_twilight
-
-# and 23:59
-$ heliocron -l 55.9533 -o -3.1883 poll
-astronomical_twilight
-
-# and now 23:59 slightly further south
-$ heliocron -l 50.9533 -o -3.1883 poll
-night
+Solar elevation: -0.805°
+Azimuth angle:   58.592°
 ```
+
+The same set of data can be output in machine-readable JSON format.
+```bash
+$ heliocron -l 51.4769 -o -0.0005 poll --json
+{"date":"2022-08-01T23:23:06.261284054+01:00","location":{"latitude":51.4769,"longitude":-0.0005},"day_part":"astronomical_twilight","solar_elevation":-17.08752031631813,"azimuth_angle":334.3033709467604}
+```
+
+Supplying the optional `--watch` flag will give a second-by-second live view of the position of the Sun.
+
+![`poll` in `watch` mode](https://github.com/mfreeborn//blob/master/images/poll-watch-plain.gif?raw=true)
 
 ## Configuration
 
@@ -276,7 +279,7 @@ heliocron [Options] <Subcommand> [Subcommand Options]
 
   * `--json` [optional]
 
-    When set, the report will be printed in JSON format, enabling other programs to easily parse the output. If absent, the report is presented in a human-readable format, as displayed in the [usage examples](#usage-examples) above.
+    If this flag is present, the report will be output in JSON format, enabling easier parsing by other programs. If absent, the report is presented in a human-readable format, as displayed in the [usage examples](#usage-examples) above.
 
     Example:
     ```bash
@@ -351,6 +354,25 @@ heliocron [Options] <Subcommand> [Subcommand Options]
     This option has no other effect on the running of the program.
 
 * #### poll
-  Display whether the current local time is one of 'day', 'civil_twilight', 'nautical_twilight', 'astronomical_twilight' or 'night'.
+  Display real time data pertaining to the Sun at the current local time
 
-  If `--date` is specified as an option, it is ignored in favour of using the current local date.
+  Note that if `--date` is specified previously as an option, it is ignored in favour of using the current local date.
+
+  * `--watch` [optional]
+    If this flag is present, the program will continue to run and update the values every second.
+
+  * `--json` [optional]
+    If this flag is present, the data will be output in JSON format, enabling easier parsing by other programs. If absent, the report is presented in a human-readable format, as displayed in the [usage examples](#usage-examples) above.
+
+    Example:
+    ```bash
+    # note that the output has been annotated and prettified in this example to more clearly show the structure
+    $ heliocron poll --json  
+    {
+      "date": "2022-08-01T14:51:06.137191414+01:00",  # dates are formatted as rfc3339
+      "location": {"latitude": 51.4769, "longitude": -0.0005},  # coordinates use decimal degree notation 
+      "day_part": "day",  # one of "day", "civil_twilight", "nautical_twilight", "astronomical_twilight" or "night"
+      "solar_elevation": 50.59814354839365,  # floating point number of degrees that the Sun is above the horizon
+      "azimuth_angle": 221.39860862334302  # floating point number of degrees that the Sun is positioned on a horizontal plane clockwise from north
+    }
+    ```
