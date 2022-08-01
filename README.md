@@ -132,20 +132,16 @@ $ heliocron -l 51.4769 -o -0.0005 poll --json
 Supplying the optional `--watch` flag will give a second-by-second live view of the position of the Sun.
 
 <details>
-  <summary>Click to expand!</summary>
-
-![`poll` in `watch` mode](https://github.com/mfreeborn//blob/master/images/poll-watch-plain.gif?raw=true)
-
+  <summary>Click to expand</summary>
+  <img src="https://github.com/mfreeborn/heliocron/blob/master/assets/poll-watch-plain.gif?raw=true" width="736" height="478" />
 </details>
 <br>
 
-`--watch` and `--json` together also works:
+`--watch` and `--json` combined also works:
 
 <details>
-  <summary>Click to expand!</summary>
-
-![`poll` in `watch` mode as json](https://github.com/mfreeborn//blob/master/images/poll-watch-json.gif?raw=true)
-
+  <summary>Click to expand</summary>
+  <img src="https://github.com/mfreeborn/heliocron/blob/master/assets/poll-watch-json.gif?raw=true" width="735" height="477" />
 </details>
 <br>
 
