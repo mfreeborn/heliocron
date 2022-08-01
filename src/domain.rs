@@ -4,7 +4,51 @@ use std::ops::RangeInclusive;
 use chrono::{DateTime, Duration, FixedOffset, NaiveTime};
 use serde::Serialize;
 
-// An enumeration of parsed commands.
+/// An enumeration of the different parts of the day. Not all of them necessarily occur during a
+/// given 24-hour period.
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DayPart {
+    Day,
+    CivilTwilight,
+    NauticalTwilight,
+    AstronomicalTwilight,
+    Night,
+}
+
+impl DayPart {
+    pub fn from_elevation_angle(angle: f64) -> Self {
+        if angle < -18.0 {
+            Self::Night
+        } else if angle < -12.0 {
+            Self::AstronomicalTwilight
+        } else if angle < -6.0 {
+            Self::NauticalTwilight
+        } else if angle < 0.833 {
+            Self::CivilTwilight
+        } else {
+            Self::Day
+        }
+    }
+}
+
+impl fmt::Display for DayPart {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Day => "Day",
+                Self::CivilTwilight => "Civil Twilight",
+                Self::NauticalTwilight => "Nautical Twilight",
+                Self::AstronomicalTwilight => "Astronomical Twilight",
+                Self::Night => "Night",
+            }
+        )
+    }
+}
+
+/// An enumeration of parsed commands.
 pub enum Action {
     Report {
         json: bool,
@@ -14,7 +58,10 @@ pub enum Action {
         offset: Duration,
         run_missed_task: bool,
     },
-    Poll,
+    Poll {
+        watch: bool,
+        json: bool,
+    },
 }
 
 /// A newtype representing an optional datetime.

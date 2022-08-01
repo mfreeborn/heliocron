@@ -10,7 +10,7 @@ use super::{
 };
 
 #[derive(Debug)]
-pub struct SolarReport {
+pub struct Report {
     pub date: DateTime<FixedOffset>,
     pub coordinates: Coordinates,
 
@@ -30,19 +30,19 @@ pub struct SolarReport {
     pub astronomical_dusk: EventTime,
 }
 
-impl fmt::Display for SolarReport {
+impl fmt::Display for Report {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let fmt_str = self.format_report();
         write!(f, "{}", fmt_str)
     }
 }
 
-impl Serialize for SolarReport {
+impl Serialize for Report {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let mut state = serializer.serialize_struct("SolarReport", 12)?;
+        let mut state = serializer.serialize_struct("Report", 12)?;
         state.serialize_field("date", &self.date.to_rfc3339())?;
         state.serialize_field("location", &self.coordinates)?;
         state.serialize_field("day_length", &self.day_length.num_seconds())?;
@@ -66,8 +66,8 @@ impl Serialize for SolarReport {
     }
 }
 
-impl SolarReport {
-    pub fn new(solar_calculations: calc::SolarCalculations) -> SolarReport {
+impl Report {
+    pub fn new(solar_calculations: calc::SolarCalculations) -> Report {
         // we can unwrap all of these safely because they have been manually validated against the Events::new constructor
         let sunrise = solar_calculations
             .event_time(domain::Event::from_event_name(domain::EventName::Sunrise));
@@ -92,7 +92,7 @@ impl SolarReport {
         let solar_noon = solar_calculations
             .event_time(domain::Event::from_event_name(domain::EventName::SolarNoon));
 
-        SolarReport {
+        Report {
             date: solar_calculations.date,
             coordinates: solar_calculations.coordinates.clone(),
             solar_noon,
@@ -132,7 +132,7 @@ impl SolarReport {
             self.coordinates.longitude,
             self.date,
             self.solar_noon,
-            SolarReport::day_length_hms(self.day_length),
+            Report::day_length_hms(self.day_length),
             self.sunrise,
             self.sunset,
             self.civil_dawn,
@@ -154,6 +154,71 @@ impl SolarReport {
     }
 }
 
+pub struct PollReport {
+    pub date: DateTime<FixedOffset>,
+    pub coordinates: Coordinates,
+
+    pub solar_elevation: f64,
+    pub azimuth_angle: f64,
+}
+
+impl PollReport {
+    pub fn new(solar_calculations: &calc::SolarCalculations) -> Self {
+        Self {
+            date: solar_calculations.date,
+            coordinates: solar_calculations.coordinates.clone(),
+            solar_elevation: solar_calculations.solar_elevation(),
+            azimuth_angle: solar_calculations.azimuth_angle(),
+        }
+    }
+}
+
+impl std::fmt::Display for PollReport {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let report = format!(
+            "LOCATION\n\
+    --------\n\
+    Latitude:  {}\n\
+    Longitude: {}\n\n\
+    DATE\n\
+    ----\n\
+    {}\n\
+    {}\n\n\
+    Solar elevation: {:.3}°\n\
+    Azimuth angle:   {:.3}°\n\
+    ",
+            self.coordinates.latitude,
+            self.coordinates.longitude,
+            self.date.format("%F %T %:z"),
+            domain::DayPart::from_elevation_angle(self.solar_elevation),
+            self.solar_elevation,
+            self.azimuth_angle,
+        );
+
+        write!(f, "{}", report)
+    }
+}
+
+impl Serialize for PollReport {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut state = serializer.serialize_struct("PollReport", 4)?;
+        state.serialize_field("date", &self.date.to_rfc3339())?;
+        state.serialize_field("location", &self.coordinates)?;
+
+        state.serialize_field(
+            "day_part",
+            &domain::DayPart::from_elevation_angle(self.solar_elevation),
+        )?;
+        state.serialize_field("solar_elevation", &self.solar_elevation)?;
+        state.serialize_field("azimuth_angle", &self.azimuth_angle)?;
+
+        state.end()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
@@ -172,7 +237,7 @@ mod tests {
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
         // Default trait should handle the rest of the parameters
-        let _new_report = SolarReport::new(calcs);
+        let _new_report = Report::new(calcs);
     }
 
     #[test]
@@ -186,7 +251,7 @@ mod tests {
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
         let report_str = report.format_report();
 
         assert!(report_str.contains("LOCATION"));
@@ -207,7 +272,7 @@ mod tests {
         let sunset_str = format!("{}", report.sunset);
         assert!(report_str.contains(&sunset_str));
 
-        let day_length_str = SolarReport::day_length_hms(report.day_length);
+        let day_length_str = Report::day_length_hms(report.day_length);
         assert!(report_str.contains(&day_length_str));
     }
 
@@ -224,7 +289,7 @@ mod tests {
             ;
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         assert_eq!("06:00:07", report.sunrise.time().unwrap().to_string());
         assert_eq!("18:36:59", report.sunset.time().unwrap().to_string());
@@ -245,7 +310,7 @@ mod tests {
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         assert_eq!("04:26:26", report.sunrise.time().unwrap().to_string());
         assert_eq!("22:02:52", report.sunset.time().unwrap().to_string());
@@ -270,7 +335,7 @@ mod tests {
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         assert_eq!("06:47:03", report.sunrise.time().unwrap().to_string());
         assert_eq!("19:47:03", report.sunset.time().unwrap().to_string());
@@ -291,7 +356,7 @@ mod tests {
         ;
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         assert_eq!("2020-03-25 17:23:21 +00:00", report.sunrise.0.unwrap().to_string());
         assert_eq!("2020-03-26 06:00:14 +00:00", report.sunset.0.unwrap().to_string());
@@ -311,7 +376,7 @@ mod tests {
         };
 
         let calcs = calc::SolarCalculations::new(date, coordinates);
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         assert_eq!(None, report.sunrise.0);
         assert_eq!(None, report.sunset.0);
@@ -322,7 +387,7 @@ mod tests {
         assert_eq!(None, report.nautical_dusk.0);
         assert_eq!(None, report.astronomical_dawn.0);
         assert_eq!(None, report.astronomical_dusk.0);
-        assert_eq!("24h 0m 0s", SolarReport::day_length_hms(report.day_length));
+        assert_eq!("24h 0m 0s", Report::day_length_hms(report.day_length));
     }
 
     #[test]
@@ -335,7 +400,7 @@ mod tests {
         };
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         let expected = serde_json::json!({
             "location": {"latitude": 55.9533, "longitude": -3.1883},
@@ -360,7 +425,7 @@ mod tests {
         };
         let calcs = calc::SolarCalculations::new(date, coordinates);
 
-        let report = SolarReport::new(calcs);
+        let report = Report::new(calcs);
 
         let expected = serde_json::json!({
             "location": {"latitude": 51.4000, "longitude": -5.4670},

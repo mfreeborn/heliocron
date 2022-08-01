@@ -18,6 +18,7 @@ pub struct SolarCalculations {
     solar_declination: f64,
     solar_noon_fraction: f64,
     corrected_solar_elevation_angle: f64,
+    solar_azimuth_angle: f64,
 }
 
 impl SolarCalculations {
@@ -121,17 +122,46 @@ impl SolarCalculations {
 
         let corrected_solar_elevation_angle = solar_elevation_angle + atmospheric_refraction;
 
+        let solar_azimuth_angle = if true_hour_angle > 0. {
+            (((coordinates.latitude.to_radians().sin() * solar_zenith_angle.to_radians().cos()
+                - solar_declination.to_radians().sin())
+                / (coordinates.latitude.to_radians().cos()
+                    * solar_zenith_angle.to_radians().sin()))
+            .acos()
+            .to_degrees())
+                + 180. % 360.
+        } else {
+            (540.
+                - (((coordinates.latitude.to_radians().sin()
+                    * solar_zenith_angle.to_radians().cos()
+                    - solar_declination.to_radians().sin())
+                    / (coordinates.latitude.to_radians().cos()
+                        * solar_zenith_angle.to_radians().sin()))
+                .acos()
+                .to_degrees()))
+                % 360.
+        };
+
         Self {
             date,
             coordinates,
             solar_declination,
             solar_noon_fraction,
             corrected_solar_elevation_angle,
+            solar_azimuth_angle,
         }
+    }
+
+    pub fn refresh(&self, date: DateTime<FixedOffset>) -> Self {
+        Self::new(date, self.coordinates.clone())
     }
 
     pub fn solar_elevation(&self) -> f64 {
         self.corrected_solar_elevation_angle
+    }
+
+    pub fn azimuth_angle(&self) -> f64 {
+        self.solar_azimuth_angle
     }
 
     pub fn solar_noon(&self) -> domain::EventTime {
