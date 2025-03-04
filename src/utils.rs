@@ -1,20 +1,11 @@
 use std::result;
 
 use chrono::{DateTime, FixedOffset, Local, TimeZone};
-use tokio_walltime;
+use tokio::time::sleep;
 
 use super::errors::{HeliocronError, RuntimeErrorKind};
 
 type Result<T> = result::Result<T, HeliocronError>;
-
-async fn sleep(time: DateTime<FixedOffset>) -> Result<()> {
-    if cfg!(feature = "integration-test") {
-        println!("Fake sleep until {}.", time);
-    } else {
-        tokio_walltime::sleep_until(time).await?;
-    }
-    Ok(())
-}
 
 pub(crate) async fn wait(wait_until: DateTime<FixedOffset>) -> Result<()> {
     let local_time = Local::now();
@@ -36,7 +27,7 @@ pub(crate) async fn wait(wait_until: DateTime<FixedOffset>) -> Result<()> {
         duration_to_wait.as_secs(),
         wait_until
     );
-    sleep(wait_until).await?;
+    sleep(duration_to_wait).await;
     Ok(())
 }
 
