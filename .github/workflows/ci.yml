@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf]
+        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf, aarch64]
     steps:
       - uses: actions/checkout@v3
 
@@ -47,7 +47,7 @@ jobs:
 
       - name: Run tests
         run: ${{ env.test_runner }} test --no-fail-fast --verbose --target ${{ matrix.target }} -- --nocapture
-  
+
   lint:
     name: Check Rust code with rustfmt and clippy
     runs-on: ubuntu-latest
