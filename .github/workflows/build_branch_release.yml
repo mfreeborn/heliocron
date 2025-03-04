@@ -1,0 +1,60 @@
+name: "Build Branch Releases"
+
+on:
+  workflow_dispatch:
+
+env:
+  RUST_BACKTRACE: full
+
+jobs:
+  build-release:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    env:
+      NATIVE_TARGET: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf, aarch64]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+        if: env.NATIVE_TARGET == 'false'
+
+      - name: Set build binary
+        run: |
+          if ${NATIVE_TARGET} == true; then
+            echo "build_binary=cargo" >> $GITHUB_ENV
+          else
+            echo "build_binary=cross" >> $GITHUB_ENV
+          fi
+
+      - name: Build binary
+        run: ${{ env.build_binary }} build --release --verbose --locked --target ${{ matrix.target }}
+
+      - name: Build archive
+        shell: bash
+        run: |
+          cp target/${{ matrix.target }}/release/heliocron ./heliocron
+          tar -czvf "heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" heliocron README.md LICENSE-APACHE LICENSE-MIT
+          echo "ASSET=heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
+
+      - name: Create release directory for artifact
+        shell: bash
+        run: |
+          mkdir release
+          mv ${{ env.ASSET }} release/
+
+      - name: Save release as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 3
+          name: release
+          path: release
