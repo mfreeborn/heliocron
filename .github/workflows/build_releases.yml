@@ -39,21 +39,8 @@ jobs:
       - name: Build binary
         run: ${{ env.build_binary }} build --release --verbose --locked --target ${{ matrix.target }}
 
-      - name: Build archive
-        shell: bash
-        run: |
-          cp target/${{ matrix.target }}/release/heliocron ./heliocron
-          tar -czvf "heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" heliocron README.md LICENSE-APACHE LICENSE-MIT
-          echo "ASSET=heliocron-${GITHUB_REF#refs/tags/}-${{ matrix.target }}.tar.gz" >> $GITHUB_ENV
-
-      - name: Create release directory for artifact
-        shell: bash
-        run: |
-          mkdir release
-          mv ${{ env.ASSET }} release/
-
       - name: Save release as artifact
         uses: actions/upload-artifact@v4
         with:
           name: heliocron-${{ matrix.os }}
-          path: target/release/heliocron
+          path: target/${{ matrix.target }}/release/heliocron
