@@ -1,7 +1,7 @@
 name: "Build Releases"
 
 on:
-  workflow_call:
+  workflow_dispatch:
 
 env:
   RUST_BACKTRACE: full
@@ -18,7 +18,7 @@ jobs:
         target: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf, arm-unknown-linux-gnueabihf, aarch64-unknown-linux-gnu]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -53,8 +53,7 @@ jobs:
           mv ${{ env.ASSET }} release/
 
       - name: Save release as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          retention-days: 3
-          name: release
-          path: release
+          name: heliocron-${{ matrix.os }}
+          path: target/release/heliocron
