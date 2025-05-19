@@ -139,9 +139,9 @@ fn test_altitude_ignored_for_non_custom_events() {
 
     cmd.args(&[
         "-l",
-        "51.4769N",
+        "51.4769",
         "-o",
-        "0.0005W",
+        "0.0005",
         "--date",
         "2099-12-30",
         "wait",
@@ -164,9 +164,9 @@ fn test_custom_am_event_correctness() {
 
     cmd.args(&[
         "-l",
-        "51.4769N",
+        "51.4769",
         "-o",
-        "0.0005W",
+        "0.0005",
         "--date",
         "2099-12-30",
         "wait",
@@ -179,7 +179,7 @@ fn test_custom_am_event_correctness() {
     .success()
     .stdout(predicates::str::contains("going to sleep for"))
     .stdout(predicates::str::contains("until 2099-12-30"))
-    .stdout(predicates::str::contains(":07:05"));
+    .stdout(predicates::str::contains("08:07:"));
 }
 
 #[test]
@@ -189,9 +189,9 @@ fn test_custom_pm_event_correctness() {
 
     cmd.args(&[
         "-l",
-        "51.4769N",
+        "51.4769",
         "-o",
-        "0.0005W",
+        "0.0005",
         "--date",
         "2099-12-30",
         "wait",
@@ -204,7 +204,7 @@ fn test_custom_pm_event_correctness() {
     .success()
     .stdout(predicates::str::contains("going to sleep for"))
     .stdout(predicates::str::contains("until 2099-12-30"))
-    .stdout(predicates::str::contains("57:51"));
+    .stdout(predicates::str::contains("17:57:"));
 }
 
 #[test]
