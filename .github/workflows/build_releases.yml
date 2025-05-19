@@ -43,4 +43,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: heliocron-${{ matrix.target }}
-          path: target/build/${{ matrix.target }}/release/${{ matrix.target }}/heliocron
+          path: target/build/${{ matrix.target }}/release/heliocron
