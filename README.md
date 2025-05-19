@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/heliocron.svg)](https://crates.io/crates/heliocron)
 [![crates.io](https://img.shields.io/crates/d/heliocron.svg)](https://crates.io/crates/heliocron)
-[![Build Status](https://github.com/mfreeborn/heliocron/workflows/ci/badge.svg)](https://github.com/mfreeborn/heliocron/actions)
+[![Build Status](https://github.com/mfreeborn/heliocron/actions/workflows/ci.yml/badge.svg)](https://github.com/mfreeborn/heliocron/actions)
 
 A simple command line application that integrates with `cron` to execute tasks relative to sunset, sunrise and other such solar events.
 
