@@ -15,7 +15,7 @@ pub fn display_report(solar_calculations: calc::SolarCalculations, json: bool) -
     } else {
         report.to_string()
     };
-    println!("{}", output);
+    println!("{output}");
     Ok(())
 }
 
