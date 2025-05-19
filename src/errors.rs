@@ -56,7 +56,7 @@ impl std::fmt::Display for HeliocronError {
                 "Config error: {}",
                 match err {
                     ConfigErrorKind::InvalidCoordindates(msg) =>
-                        format!("Invalid coordinates - {}", msg),
+                        format!("Invalid coordinates - {msg}"),
                     ConfigErrorKind::InvalidTomlFile => err.as_str().to_string(),
                     ConfigErrorKind::ParseDate => err.as_str().to_string(),
                     ConfigErrorKind::ParseAltitude => err.as_str().to_string(),
@@ -73,7 +73,7 @@ impl std::fmt::Display for HeliocronError {
                     RuntimeErrorKind::PastEvent(when) => {
                         format!("The chosen event occurred in the past: {when}. Cannot wait a negative amount of time.")
                     }
-                    RuntimeErrorKind::EventMissed(by) => format!("Event missed by {}s", by),
+                    RuntimeErrorKind::EventMissed(by) => format!("Event missed by {by}s"),
                     RuntimeErrorKind::SleepError(e) => e.to_string(),
                 }
             ),

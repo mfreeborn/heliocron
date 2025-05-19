@@ -63,13 +63,13 @@ fn test_report_custom_location() {
     // assert that a report is successfully generated when an arbitrary location is given
     let mut cmd = get_base_command();
     let report_long = cmd
-        .args(&["--latitude", "51.0", "--longitude", "4.36", "report"])
+        .args(["--latitude", "51.0", "--longitude", "4.36", "report"])
         .assert();
 
     assert_report(report_long);
 
     let mut cmd = get_base_command();
-    let report_short = cmd.args(&["-l", "51.0", "-o", "4.36", "report"]).assert();
+    let report_short = cmd.args(["-l", "51.0", "-o", "4.36", "report"]).assert();
 
     assert_report(report_short)
 }
@@ -79,7 +79,7 @@ fn test_report_custom_timezone() {
     // assert that a report is successfully generated when an arbitrary time zone is given
     let mut cmd = get_base_command();
     let report_long = cmd
-        .args(&[
+        .args([
             "--latitude",
             "51.0",
             "--longitude",
@@ -94,7 +94,7 @@ fn test_report_custom_timezone() {
 
     let mut cmd = get_base_command();
     let report_short = cmd
-        .args(&[
+        .args([
             "--latitude",
             "51.0",
             "--longitude",
@@ -114,7 +114,7 @@ fn test_report_json_output() {
 
     // parse the output into a Json Value
     let json: serde_json::Value = serde_json::from_slice(
-        &cmd.args(&[
+        &cmd.args([
             "--date",
             "2022-06-11",
             "--time-zone",
@@ -151,7 +151,7 @@ fn test_report_json_output() {
 #[test]
 fn test_correct_output_small_offset() {
     let output = get_base_command()
-        .args(&[
+        .args([
             "--date",
             "2022-07-29",
             "--time-zone",
@@ -188,7 +188,7 @@ fn test_correct_output_small_offset() {
 #[test]
 fn test_correct_output_large_pos_offset() {
     let output = get_base_command()
-        .args(&[
+        .args([
             "--date",
             "2022-07-29",
             "--time-zone",

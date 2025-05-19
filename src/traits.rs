@@ -50,7 +50,7 @@ mod tests {
         ];
 
         for (expected, arg) in params.iter() {
-            let date = NaiveDateTime::parse_from_str(*arg, "%FT%T").unwrap();
+            let date = NaiveDateTime::parse_from_str(arg, "%FT%T").unwrap();
             assert_eq!(*expected, format!("{:.5}", date.to_julian_date()));
         }
     }

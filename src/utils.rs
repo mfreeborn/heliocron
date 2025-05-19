@@ -9,7 +9,7 @@ type Result<T> = result::Result<T, HeliocronError>;
 
 async fn sleep(time: DateTime<FixedOffset>) -> Result<()> {
     if cfg!(feature = "integration-test") {
-        println!("Fake sleep until {}.", time);
+        println!("Fake sleep until {time}.");
     } else {
         tokio_walltime::sleep_until(time).await?;
     }
