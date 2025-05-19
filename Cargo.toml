@@ -18,13 +18,14 @@ integration-test = []
 
 [dependencies]
 chrono = "0.4"
+clap = { version = "3", features = ["derive"] }
 crossterm = "0.24.0"
 dirs = "4"
+errno = "0.3.12"
+libc = "0.2.172"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-clap = { version = "3", features = ["derive"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "time"] }
-tokio-walltime =  "0.1.2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "time"] }
 toml = "0.5"
 
 [dev-dependencies]
@@ -34,5 +35,5 @@ pretty_assertions = "1"
 
 [profile.release]
 codegen-units = 1
-lto = "fat"
+lto = true
 opt-level = 3
