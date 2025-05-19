@@ -2,6 +2,7 @@ name: "Build Releases"
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 env:
   RUST_BACKTRACE: full
