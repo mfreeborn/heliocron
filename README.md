@@ -71,7 +71,7 @@ Thread going to sleep for _ seconds until 2020-02-25 17:32:17 +00:00. Press ctrl
 Integration with `cron` for recurring tasks is easy. The following snippet shows a `crontab` entry which will run every morning at 2am. `heliocron` will wait until 30 minutes before sunrise, before allowing the execution of the ``turn-on-lights.sh`` script.
 
 ```bash
-0 2 * * * heliocron --latitude 51.4769 --longitude -0.0005 wait --event sunrise --offset -00:30 \
+0 2 * * * /your/path/to/heliocron --latitude 51.4769 --longitude -0.0005 wait --event sunrise --offset -00:30 \
 && turn-on-lights.sh
 ```
 

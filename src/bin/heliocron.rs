@@ -24,7 +24,7 @@ async fn main() {
     process::exit(match run_heliocron().await {
         Ok(_) => 0,
         Err(err) => {
-            eprintln!("{err}");
+            eprintln!("{}", err);
             1
         }
     });

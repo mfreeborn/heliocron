@@ -32,7 +32,8 @@ pub struct Report {
 
 impl fmt::Display for Report {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.format_report())
+        let fmt_str = self.format_report();
+        write!(f, "{}", fmt_str)
     }
 }
 
@@ -149,7 +150,7 @@ impl Report {
         let minutes = (day_length / 60) % 60;
         let seconds = day_length % 60;
 
-        format!("{hours}h {minutes}m {seconds}s")
+        format!("{}h {}m {}s", hours, minutes, seconds)
     }
 }
 
@@ -194,7 +195,7 @@ impl std::fmt::Display for PollReport {
             self.azimuth_angle,
         );
 
-        write!(f, "{report}")
+        write!(f, "{}", report)
     }
 }
 

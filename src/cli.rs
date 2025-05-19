@@ -128,7 +128,7 @@ fn parse_date(date: &str) -> Result<NaiveDate, String> {
 
 fn parse_tz(tz: &str) -> Result<chrono::FixedOffset, String> {
     // Use chrono's own parsing function to validate the provided time zone.
-    let date = chrono::DateTime::parse_from_str(&format!("2022-01-01T00:00:00{tz}"), "%FT%T%:z")
+    let date = chrono::DateTime::parse_from_str(&format!("2022-01-01T00:00:00{}", tz), "%FT%T%:z")
         .map_err(|_| {
             format!(
                 "Invalid time zone - expected the format '[+|-]HH:MM' between '-23:59' and '+23:59'. Found '{tz}'"
@@ -170,7 +170,7 @@ pub fn parse_config() -> Result<Config, HeliocronError> {
                     match res {
                         Ok(coords) => Some(coords),
                         Err(e) => {
-                            eprintln!("Warning - couldn't parse configuration file due to the following reason: {e}\n. Proceeding with default coordinates.");
+                            eprintln!("Warning - couldn't parse configuration file due to the following reason: {}\n. Proceeding with default coordinates.", e);
                             None
                         }
                         }

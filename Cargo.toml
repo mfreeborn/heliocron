@@ -13,6 +13,12 @@ license = "Apache-2.0 OR MIT"
 edition = "2021"
 exclude = ["assets/"]
 
+[badges]
+maintenance = { status = "actively-developed" }
+
+[features]
+integration-test = []
+
 [dependencies]
 chrono = "0.4"
 crossterm = "0.24.0"
