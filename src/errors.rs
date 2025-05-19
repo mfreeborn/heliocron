@@ -1,7 +1,7 @@
 use std::error::Error;
 
+use crate::sleep;
 use chrono::{self, DateTime, FixedOffset};
-use tokio_walltime;
 
 #[derive(Debug)]
 pub enum HeliocronError {
@@ -45,7 +45,7 @@ pub enum RuntimeErrorKind {
     NonOccurringEvent,
     PastEvent(DateTime<FixedOffset>),
     EventMissed(i64),
-    SleepError(tokio_walltime::Error),
+    SleepError(sleep::Error),
 }
 
 impl std::fmt::Display for HeliocronError {
@@ -89,8 +89,8 @@ impl From<chrono::ParseError> for HeliocronError {
     }
 }
 
-impl From<tokio_walltime::Error> for HeliocronError {
-    fn from(err: tokio_walltime::Error) -> Self {
+impl From<sleep::Error> for HeliocronError {
+    fn from(err: sleep::Error) -> Self {
         HeliocronError::Runtime(RuntimeErrorKind::SleepError(err))
     }
 }

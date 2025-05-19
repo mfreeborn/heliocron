@@ -1,7 +1,7 @@
 use std::result;
 
+use crate::sleep;
 use chrono::{DateTime, FixedOffset, Local, TimeZone};
-use tokio_walltime;
 
 use super::errors::{HeliocronError, RuntimeErrorKind};
 
@@ -11,7 +11,7 @@ async fn sleep(time: DateTime<FixedOffset>) -> Result<()> {
     if cfg!(feature = "integration-test") {
         println!("Fake sleep until {time}.");
     } else {
-        tokio_walltime::sleep_until(time).await?;
+        sleep::sleep_until(time).await?;
     }
     Ok(())
 }
