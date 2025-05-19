@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use errno::errno;
-use libc;
 use std::{mem::MaybeUninit, ptr};
 use tokio::signal::unix::{signal, SignalKind};
 
