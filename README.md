@@ -26,9 +26,10 @@ Here's a quick compatibility table to help choose the correct binary to download
 
 | Platform | Binary |
 | -------- | ------ |
-| Raspberry Pi 0/1 | [heliocron-v0.8.1-arm-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.8.1/heliocron-v0.8.1-arm-unknown-linux-gnueabihf.tar.gz) |
-| Raspberry Pi 2/3/4 | [heliocron-v0.8.1-armv7-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.8.1/heliocron-v0.8.1-armv7-unknown-linux-gnueabihf.tar.gz) |
-| Linux with a 64bit CPU | [heliocron-v0.8.1-x86_64-unknown-linux-gnu.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v0.8.1/heliocron-v0.8.1-x86_64-unknown-linux-gnu.tar.gz) |
+| Raspberry Pi 0/1 | [heliocron-v1.0.0-arm-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v1.0.0/heliocron-v1.0.0-arm-unknown-linux-gnueabihf.tar.gz) |
+| Raspberry Pi 2/3/4 | [heliocron-v1.0.0-armv7-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v1.0.0/heliocron-v1.0.0-armv7-unknown-linux-gnueabihf.tar.gz) |
+| Raspberry Pi 5 | [heliocron-v1.0.0-armv7-unknown-linux-gnueabihf.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v1.0.0/heliocron-v1.0.0-armv7-unknown-linux-gnueabihf.tar.gz) |
+| Linux with a desktop x86_64 CPU | [heliocron-v1.0.0-x86_64-unknown-linux-gnu.tar.gz](https://github.com/mfreeborn/heliocron/releases/download/v1.0.0/heliocron-v1.0.0-x86_64-unknown-linux-gnu.tar.gz) |
 
 ### 2. Install with cargo
 
@@ -43,7 +44,7 @@ $ cargo install heliocron
 .
 .
 $ heliocron --version
-heliocron 0.8.1
+heliocron 1.0.0
 ```
 
 ### 3. Build from source
@@ -53,7 +54,7 @@ $ git clone https://github.com/mfreeborn/heliocron
 $ cd heliocron
 $ cargo build --release
 $ ./target/release/heliocron --version
-heliocron 0.8.1
+heliocron 1.0.0
 ```
 
 ## Usage Examples
