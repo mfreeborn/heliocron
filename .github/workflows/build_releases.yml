@@ -37,10 +37,10 @@ jobs:
           fi
 
       - name: Build binary
-        run: ${{ env.build_binary }} build --release --verbose --locked --target ${{ matrix.target }}
+        run: ${{ env.build_binary }} build --release --verbose --locked --target ${{ matrix.target }} --target-dir target/build/${{ matrix.target }}
 
       - name: Save release as artifact
         uses: actions/upload-artifact@v4
         with:
           name: heliocron-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/heliocron
+          path: target/build/${{ matrix.target }}/release/${{ matrix.target }}/heliocron
