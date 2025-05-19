@@ -401,7 +401,7 @@ mod tests {
         let vals = &["-90.0", "-89.9999999999", "-0.0", "0.0", "90.0"];
 
         for val in vals {
-            assert!(Latitude::parse(*val).is_ok());
+            assert!(Latitude::parse(val).is_ok());
         }
     }
 
@@ -410,7 +410,7 @@ mod tests {
         let vals = &["-180.0", "-90.00000000001", "90.00000001", "100.0"];
 
         for val in vals {
-            assert!(Latitude::parse(*val).is_err());
+            assert!(Latitude::parse(val).is_err());
         }
     }
 
@@ -447,7 +447,7 @@ mod tests {
         ];
 
         for val in vals {
-            assert!(Longitude::parse(*val).is_ok());
+            assert!(Longitude::parse(val).is_ok());
         }
     }
 
@@ -456,7 +456,7 @@ mod tests {
         let vals = &["-180.1", "180.01"];
 
         for val in vals {
-            assert!(Longitude::parse(*val).is_err());
+            assert!(Longitude::parse(val).is_err());
         }
     }
 
